@@ -1,0 +1,1516 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>大猪吉他练习助手</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            min-height: 100vh;
+            color: #fff;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+
+        .logo {
+            width: 80px;
+            height: 80px;
+            background: white;
+            border-radius: 20px;
+            margin: 0 auto 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .tabs {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 40px;
+            flex-wrap: wrap;
+        }
+
+        .tab-btn {
+            padding: 12px 30px;
+            background: rgba(255,255,255,0.2);
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 50px;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+            backdrop-filter: blur(10px);
+        }
+
+        .tab-btn:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-2px);
+        }
+
+        .tab-btn.active {
+            background: white;
+            color: #764ba2;
+            font-weight: bold;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+        }
+
+        .card {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            color: #333;
+            display: none;
+        }
+
+        .card.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .card h2 {
+            color: #764ba2;
+            margin-bottom: 30px;
+            font-size: 1.8em;
+        }
+
+        /* B站解析 */
+        .bili-input {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .bili-input input, .bili-quality {
+            padding: 15px 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        .bili-input input { flex: 1; min-width: 200px; }
+        .bili-input input:focus { outline: none; border-color: #764ba2; }
+        .bili-quality { background: white; color: #333; cursor: pointer; -webkit-appearance: none; -moz-appearance: none; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23764ba2' d='M6 8L1 3h10z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 36px; }
+
+        .btn-primary {
+            padding: 15px 35px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: bold;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .video-list { max-height: 600px; overflow-y: auto; }
+        .video-item { padding: 20px; background: linear-gradient(135deg, #f5f7fa, #c3cfe2); border-radius: 12px; margin-bottom: 15px; }
+        .video-title { font-weight: bold; color: #764ba2; margin-bottom: 10px; font-size: 1.1em; }
+        .video-info { color: #666; font-size: 14px; margin-bottom: 15px; }
+        .video-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+        .video-btn { padding: 10px 20px; background: linear-gradient(135deg, #667eea, #764ba2); color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; transition: all 0.3s; }
+        .video-btn:hover { transform: translateY(-2px); box-shadow: 0 3px 15px rgba(102, 126, 234, 0.4); }
+
+        /* 本地视频变速模块 */
+        .local-section { margin-top: 30px; padding-top: 25px; border-top: 2px dashed rgba(118,75,162,0.2); }
+        .local-section h3 { color: #764ba2; margin-bottom: 18px; font-size: 1.3em; }
+        .local-row { display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-bottom:14px; }
+        .local-file-wrap { flex:1; min-width:220px; position:relative; }
+        .local-file-label { display:block; padding:14px 18px; border:2px dashed #764ba2; border-radius:12px; background:rgba(118,75,162,0.05); color:#764ba2; cursor:pointer; text-align:center; font-weight:600; transition:all .2s; }
+        .local-file-label:hover { background:rgba(118,75,162,0.12); }
+        .local-file-wrap input[type="file"] { position:absolute; left:-9999px; opacity:0; }
+        .local-file-name { margin-top:6px; font-size:13px; color:#666; text-align:center; word-break:break-all; }
+        .local-speed-wrap { display:flex; align-items:center; gap:10px; padding:8px 14px; background:#f5f7fa; border-radius:12px; }
+        .local-speed-wrap label { font-weight:600; color:#764ba2; white-space:nowrap; }
+        .local-speed-wrap input[type="range"] { width:180px; accent-color:#764ba2; }
+        .local-speed-value { min-width:56px; text-align:center; font-weight:bold; color:#764ba2; font-size:16px; }
+        .local-progress { margin-top:10px; padding:12px 16px; background:linear-gradient(135deg,#f5f7fa,#e8ecf5); border-radius:10px; color:#555; font-size:14px; display:none; }
+        .local-progress.active { display:block; }
+        .local-progress-bar { height:6px; background:rgba(118,75,162,0.15); border-radius:3px; overflow:hidden; margin-top:8px; }
+        .local-progress-bar-fill { height:100%; background:linear-gradient(90deg,#667eea,#764ba2); transition:width .3s; }
+
+        /* 和弦表 */
+        .key-selector { display: flex; gap: 10px; margin-bottom: 30px; flex-wrap: wrap; }
+        .key-btn { flex: 1; padding: 12px 0; background: #f0f0f0; border: 2px solid #ddd; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer; transition: all 0.3s; text-align: center; }
+        .key-btn:hover { background: #e0e0e0; }
+        .key-btn.active { background: linear-gradient(135deg, #667eea, #764ba2); color: white; border-color: #764ba2; }
+
+        .chord-row { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 20px; }
+
+        .chord-cell {
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            border-radius: 10px;
+            padding: 10px 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+            min-width: 100px;
+            flex: 1;
+        }
+
+        .chord-cell:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); border-color: #764ba2; }
+        .chord-cell.expanded { border-color: #764ba2; background: linear-gradient(135deg, #e8e4f3, #ddd6f3); }
+
+        .chord-cell .chord-level { font-size: 11px; color: #888; margin-bottom: 2px; }
+        .chord-cell .chord-name { font-size: 1.1em; font-weight: bold; color: #764ba2; margin-bottom: 3px; }
+        .chord-cell .chord-interval { font-size: 10px; color: #666; }
+        .chord-cell .chord-mini-fret { margin-top: 6px; }
+        .chord-cell .chord-mini-fret img { width: 100%; height: auto; border-radius: 4px; }
+
+        .chord-detail {
+            display: none;
+            padding: 20px;
+            background: linear-gradient(135deg, #f5f7fa, #c3cfe2);
+            border-radius: 15px;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .chord-detail.visible { display: block; animation: fadeIn 0.3s ease; }
+
+        .tip-box { background: linear-gradient(135deg, #fff9c4, #fff176); border-left: 4px solid #ffd700; padding: 15px 20px; border-radius: 8px; margin-top: 20px; color: #666; font-size: 14px; }
+        .empty-state { text-align: center; padding: 60px 20px; color: #999; font-size: 1.2em; }
+        .loading { text-align: center; padding: 40px; color: #764ba2; }
+
+        /* 播放器 */
+        .video-player-container { background: linear-gradient(135deg, #f5f7fa, #c3cfe2); border-radius: 15px; padding: 20px; margin-top: 20px; }
+
+        /* 节拍器 - 玻璃拟态风格 */
+        .metronome-wrap { display:flex; flex-direction:column; align-items:center; gap:20px; max-width:600px; margin:0 auto; }
+        .metro-bpm-label { font-size:13px; color:#fff; background:rgba(255,255,255,0.2); backdrop-filter:blur(10px); border:1px solid rgba(255,255,255,0.3); border-radius:20px; padding:2px 18px; display:inline-block; }
+        .metro-bpm-num { font-size:7em; font-weight:900; color:#333; line-height:1; text-shadow:0 2px 8px rgba(0,0,0,0.1); }
+        .metro-tempo-name { font-size:1.1em; color:#764ba2; font-weight:600; }
+        .metro-slider-row { display:flex; align-items:center; gap:12px; width:100%; }
+        .metro-pm-btn { width:36px; height:36px; border-radius:50%; border:2px solid rgba(118,75,162,0.4); background:rgba(255,255,255,0.15); backdrop-filter:blur(8px); color:#764ba2; font-size:22px; cursor:pointer; display:flex; align-items:center; justify-content:center; line-height:1; transition:all .2s; }
+        .metro-pm-btn:hover { background:rgba(118,75,162,0.25); border-color:#764ba2; }
+        .metro-slider { flex:1; -webkit-appearance:none; height:8px; border-radius:4px; outline:none; background:linear-gradient(90deg,#764ba2 0%,rgba(255,255,255,0.3) 50%); }
+        .metro-slider::-webkit-slider-thumb { -webkit-appearance:none; width:26px; height:26px; background:#764ba2; border-radius:50%; cursor:pointer; box-shadow:0 2px 8px rgba(118,75,162,0.4); }
+        .metro-dots { display:flex; gap:10px; justify-content:center; }
+        .metro-dot { width:28px; height:28px; border-radius:50%; background:rgba(200,200,200,0.3); backdrop-filter:blur(4px); transition:all .12s; }
+        .metro-dot.on { background:#764ba2; box-shadow:0 0 15px rgba(118,75,162,0.6); transform:scale(1.15); }
+        .metro-dot.accent { background:#d35400; box-shadow:0 0 22px rgba(211,84,0,0.8); transform:scale(1.35); }
+        .metro-btns { display:flex; gap:15px; }
+        .metro-btn-start { padding:14px 36px; background:linear-gradient(135deg,#667eea,#764ba2); color:#fff; border:none; border-radius:12px; font-size:16px; cursor:pointer; font-weight:bold; transition:all .2s; box-shadow:0 4px 15px rgba(118,75,162,0.3); }
+        .metro-btn-start:hover { transform:translateY(-2px); box-shadow:0 6px 20px rgba(118,75,162,0.4); }
+        .metro-settings { width:100%; background:rgba(255,255,255,0.15); backdrop-filter:blur(16px); border:1px solid rgba(255,255,255,0.25); border-radius:16px; padding:8px 20px; }
+        .metro-row { display:flex; align-items:center; justify-content:space-between; padding:14px 0; border-bottom:1px solid rgba(255,255,255,0.15); }
+        .metro-row:last-child { border-bottom:none; }
+        .metro-row-label { font-weight:bold; color:#764ba2; font-size:15px; }
+        .metro-row-right { display:flex; align-items:center; gap:10px; }
+        .metro-num-btn { width:30px; height:30px; border-radius:50%; border:2px solid rgba(118,75,162,0.3); background:rgba(255,255,255,0.2); font-size:18px; cursor:pointer; display:flex; align-items:center; justify-content:center; color:#764ba2; transition:all .2s; }
+        .metro-num-btn:hover { background:rgba(118,75,162,0.2); border-color:#764ba2; }
+        .metro-num-val { font-size:20px; font-weight:bold; min-width:24px; text-align:center; color:#333; }
+        .metro-check { width:22px; height:22px; accent-color:#764ba2; cursor:pointer; }
+        .metro-subdiv { display:flex; flex-wrap:wrap; gap:12px; justify-content:center; padding-top:8px; }
+        .metro-subdiv-btn { display:flex; flex-direction:column; align-items:center; gap:4px; padding:10px 14px; border-radius:14px; border:1.5px solid rgba(255,255,255,0.2); background:rgba(255,255,255,0.08); backdrop-filter:blur(12px); cursor:pointer; transition:all .25s; min-width:56px; }
+        .metro-subdiv-btn:hover { background:rgba(255,255,255,0.15); border-color:rgba(118,75,162,0.4); }
+        .metro-subdiv-btn.active { background:linear-gradient(135deg,#667eea,#764ba2); border-color:transparent; box-shadow:0 4px 16px rgba(118,75,162,0.35); }
+        .metro-subdiv-btn .subdiv-label { font-size:20px; line-height:1; color:#444; }
+        .metro-subdiv-btn .subdiv-name { font-size:11px; color:#888; line-height:1; }
+        .metro-subdiv-btn.active .subdiv-label { color:#fff; }
+        .metro-subdiv-btn.active .subdiv-name { color:rgba(255,255,255,0.85); }
+
+        /* 调音器 - 专业风格 */
+        .tuner-wrap { max-width:500px; margin:0 auto; text-align:center; }
+        .tuner-note-display { font-size:8em; font-weight:900; color:#764ba2; line-height:1; margin:10px 0; min-height:120px; transition:color .2s, text-shadow .2s; }
+        .tuner-note-display.in-tune { color:#4CAF50; text-shadow:0 0 30px rgba(76,175,80,0.5); }
+        .tuner-note-display .octave { font-size:0.4em; vertical-align:super; color:#999; }
+        .tuner-status-row { display:flex; align-items:center; justify-content:center; gap:15px; margin:10px 0; }
+        .tuner-status-text { font-size:1.2em; font-weight:600; }
+        .tuner-status-text.perfect { color:#4CAF50; }
+        .tuner-status-text.sharp { color:#FF9800; }
+        .tuner-status-text.flat { color:#2196F3; }
+        .tuner-freq { font-size:0.9em; color:#999; }
+        .tuner-meter-wrap { margin:20px 0; }
+        .tuner-meter { width:100%; height:36px; background:rgba(200,200,200,0.2); border-radius:18px; position:relative; overflow:hidden; }
+        .tuner-meter::before { content:'♭'; position:absolute; left:12px; top:50%; transform:translateY(-50%); color:#2196F3; font-size:18px; font-weight:bold; }
+        .tuner-meter::after { content:'♯'; position:absolute; right:12px; top:50%; transform:translateY(-50%); color:#FF9800; font-size:18px; font-weight:bold; }
+        .tuner-meter-center { position:absolute; left:50%; top:0; bottom:0; width:2px; background:rgba(0,0,0,0.3); transform:translateX(-50%); }
+        .tuner-indicator { position:absolute; top:4px; bottom:4px; width:28px; background:linear-gradient(135deg,#667eea,#764ba2); border-radius:14px; left:50%; transform:translateX(-50%); transition:left 0.35s cubic-bezier(.25,.8,.25,1), background 0.2s; box-shadow:0 2px 8px rgba(118,75,162,0.4); }
+        .tuner-indicator.perfect { background:linear-gradient(135deg,#4CAF50,#66BB6A); }
+        .tuner-btn { padding:14px 40px; background:linear-gradient(135deg,#667eea,#764ba2); color:#fff; border:none; border-radius:12px; font-size:16px; cursor:pointer; font-weight:bold; transition:all .2s; box-shadow:0 4px 15px rgba(118,75,162,0.3); margin-top:15px; }
+        .tuner-btn:hover { transform:translateY(-2px); box-shadow:0 6px 20px rgba(118,75,162,0.4); }
+        .tuner-btn.active { background:linear-gradient(135deg,#e74c3c,#c0392b); }
+        .tuner-preset-row { display:flex; gap:10px; margin:12px 0 6px; justify-content:center; flex-wrap:wrap; }
+        .tuner-preset-select { flex:1; max-width:220px; padding:8px 12px; border-radius:10px; border:1px solid rgba(118,75,162,0.3); background:rgba(255,255,255,0.7); backdrop-filter:blur(8px); color:#333; font-size:13px; outline:none; cursor:pointer; }
+        .tuner-mode-row { display:flex; gap:8px; justify-content:center; margin:10px 0; }
+        .tuner-mode-pill { padding:6px 18px; border-radius:999px; background:rgba(255,255,255,0.2); border:1px solid rgba(255,255,255,0.3); color:#888; cursor:pointer; font-size:13px; transition:all .2s; user-select:none; backdrop-filter:blur(8px); }
+        .tuner-mode-pill.on { background:linear-gradient(135deg,#667eea,#764ba2); color:#fff; border-color:transparent; box-shadow:0 3px 10px rgba(118,75,162,0.3); }
+        .tuner-strings { display:grid; grid-template-columns:repeat(6,1fr); gap:8px; margin:14px 0 18px; }
+        .tuner-str-btn { display:flex; flex-direction:column; align-items:center; padding:12px 4px; border:1.5px solid rgba(255,255,255,0.3); border-radius:12px; background:rgba(255,255,255,0.15); backdrop-filter:blur(10px); cursor:pointer; transition:all .15s; user-select:none; }
+        .tuner-str-btn:active { transform:scale(0.96); }
+        .tuner-str-btn.active { border-color:#764ba2; background:linear-gradient(135deg,rgba(102,126,234,0.25),rgba(118,75,162,0.25)); box-shadow:0 4px 14px rgba(118,75,162,0.25); }
+        .tuner-str-note { font-size:18px; font-weight:600; color:#555; }
+        .tuner-str-btn.active .tuner-str-note { color:#764ba2; font-weight:700; }
+        .tuner-str-num { font-size:10px; color:#aaa; margin-top:2px; }
+        .tuner-str-btn.active .tuner-str-num { color:#764ba2; }
+        .tuner-settings { margin-top:25px; background:rgba(255,255,255,0.12); backdrop-filter:blur(16px); border:1px solid rgba(255,255,255,0.2); border-radius:16px; padding:16px 20px; text-align:left; }
+        .tuner-settings-title { font-weight:bold; color:#764ba2; margin-bottom:12px; font-size:14px; }
+        .tuner-input-row { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+        .tuner-input-row:last-child { margin-bottom:0; }
+        .tuner-input-label { font-size:13px; color:#666; min-width:60px; }
+        .tuner-select { flex:1; padding:8px 12px; border:1px solid rgba(255,255,255,0.3); border-radius:8px; background:rgba(255,255,255,0.15); color:#333; font-size:13px; outline:none; }
+        .tuner-select:focus { border-color:#764ba2; }
+        .tuner-channels { display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; }
+        .tuner-ch-btn { padding:6px 12px; border-radius:8px; border:1px solid rgba(255,255,255,0.2); background:rgba(255,255,255,0.1); font-size:12px; cursor:pointer; color:#555; transition:all .2s; }
+        .tuner-ch-btn:hover { background:rgba(118,75,162,0.15); }
+        .tuner-ch-btn.active { background:#764ba2; color:#fff; border-color:#764ba2; }
+    </style>
+    <script th:inline="none">
+        function switchTab(tab, btn) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.card').forEach(card => card.classList.remove('active'));
+            if (btn) btn.classList.add('active');
+            document.getElementById(tab + '-card').classList.add('active');
+        }
+
+        // 调音器 - 需要在 head 中提前定义
+        // ========== 调弦预设（移植自 HzSeek）==========
+        var TUNER_PRESETS = [
+            { id:'standard', name:'标准调弦 E A D G B E', strings:[
+                {note:'E',  label:'⑥', freq:82.41},
+                {note:'A',  label:'⑤', freq:110.00},
+                {note:'D',  label:'④', freq:146.83},
+                {note:'G',  label:'③', freq:196.00},
+                {note:'B',  label:'②', freq:246.94},
+                {note:'E',  label:'①', freq:329.63}
+            ]},
+            { id:'dropD', name:'Drop D (D A D G B E)', strings:[
+                {note:'D',  label:'⑥', freq:73.42},
+                {note:'A',  label:'⑤', freq:110.00},
+                {note:'D',  label:'④', freq:146.83},
+                {note:'G',  label:'③', freq:196.00},
+                {note:'B',  label:'②', freq:246.94},
+                {note:'E',  label:'①', freq:329.63}
+            ]},
+            { id:'openG', name:'Open G (D G D G B D)', strings:[
+                {note:'D',  label:'⑥', freq:73.42},
+                {note:'G',  label:'⑤', freq:98.00},
+                {note:'D',  label:'④', freq:146.83},
+                {note:'G',  label:'③', freq:196.00},
+                {note:'B',  label:'②', freq:246.94},
+                {note:'D',  label:'①', freq:293.66}
+            ]},
+            { id:'dadgad', name:'DADGAD', strings:[
+                {note:'D',  label:'⑥', freq:73.42},
+                {note:'A',  label:'⑤', freq:110.00},
+                {note:'D',  label:'④', freq:146.83},
+                {note:'G',  label:'③', freq:196.00},
+                {note:'A',  label:'②', freq:220.00},
+                {note:'D',  label:'①', freq:293.66}
+            ]},
+            { id:'halfDown', name:'降半音 Eb Ab Db Gb Bb Eb', strings:[
+                {note:'E\u266D', label:'⑥', freq:77.78},
+                {note:'A\u266D', label:'⑤', freq:103.83},
+                {note:'D\u266D', label:'④', freq:138.59},
+                {note:'G\u266D', label:'③', freq:185.00},
+                {note:'B\u266D', label:'②', freq:233.08},
+                {note:'E\u266D', label:'①', freq:311.13}
+            ]}
+        ];
+
+        var tunerStream = null, tunerAnalyser = null, tunerRunning = false, tunerAudioCtx = null;
+        var tunerGainNode = null, tunerRaf = null;
+        var tunerHighpass = null, tunerLowpass = null;
+        var tunerSelectedChannel = -1; // -1 = all channels mixed
+        var tunerDeviceList = [];
+        var tunerCurrentPreset = TUNER_PRESETS[0];
+        var tunerSelectedIdx = 5;
+        var tunerAutoDetect = true;
+        var tunerSmoothedFreq = 0;
+        var tunerFreqHistory = [];
+        var tunerLastAutoIdx = -1, tunerLastAutoSwitchTime = 0;
+        var tunerLastDisplayUpdate = 0;
+        var tunerLastVibrateTime = 0;
+        var TUNER_AUTO_SWITCH_DEBOUNCE_MS = 300;
+        var TUNER_AUTO_SWITCH_MAX_CENTS = 30;
+        var TUNER_FREQ_HISTORY_SIZE = 15;
+        var TUNER_DISPLAY_THROTTLE_MS = 250;
+        var TUNER_YIN_THRESHOLD = 0.10;
+        var TUNER_MIN_FREQ = 60;
+        var TUNER_MAX_FREQ = 1000;
+
+        function renderTunerPresets() {
+            var sel = document.getElementById('tunerPreset');
+            sel.innerHTML = '';
+            TUNER_PRESETS.forEach(function(p) {
+                var opt = document.createElement('option');
+                opt.value = p.id; opt.textContent = p.name;
+                sel.appendChild(opt);
+            });
+            sel.value = tunerCurrentPreset.id;
+        }
+
+        function onTunerPresetChange() {
+            var id = document.getElementById('tunerPreset').value;
+            for (var i = 0; i < TUNER_PRESETS.length; i++) {
+                if (TUNER_PRESETS[i].id === id) { tunerCurrentPreset = TUNER_PRESETS[i]; break; }
+            }
+            tunerSelectedIdx = tunerCurrentPreset.strings.length - 1;
+            renderTunerStrings();
+        }
+
+        function renderTunerStrings() {
+            var g = document.getElementById('tunerStrings');
+            g.innerHTML = '';
+            g.style.gridTemplateColumns = 'repeat(' + tunerCurrentPreset.strings.length + ', 1fr)';
+            tunerCurrentPreset.strings.forEach(function(s, i) {
+                var b = document.createElement('div');
+                b.className = 'tuner-str-btn' + (i === tunerSelectedIdx ? ' active' : '');
+                b.innerHTML = '<span class="tuner-str-note">' + s.note + '</span><span class="tuner-str-num">' + s.label + '</span>';
+                b.onclick = (function(idx) {
+                    return function() { setTunerAutoDetect(false); selectTunerIdx(idx); };
+                })(i);
+                g.appendChild(b);
+            });
+        }
+
+        function selectTunerIdx(i) {
+            tunerSelectedIdx = i;
+            var btns = document.querySelectorAll('.tuner-str-btn');
+            for (var j = 0; j < btns.length; j++) btns[j].classList.toggle('active', j === i);
+        }
+
+        function setTunerAutoDetect(on) {
+            tunerAutoDetect = on;
+            document.getElementById('tunerModeAuto').classList.toggle('on', on);
+            document.getElementById('tunerModeManual').classList.toggle('on', !on);
+        }
+
+        // ========== YIN 音高检测算法（移植自 HzSeek）==========
+        // hintFreq：可选，若传入则只在 hintFreq 的 ±1 半音范围搜索（目标锁定，抗谐波误判）
+        function yinPitchDetect(buffer, sampleRate, hintFreq) {
+            var N = buffer.length;
+            var halfN = N >> 1;
+            var minTau, maxTau;
+            if (hintFreq && hintFreq > 0) {
+                // 目标锁定：限制 tau 在目标频率 ±1 半音 (×/÷ 2^(1/12) ≈ 1.0595)
+                var hintTau = sampleRate / hintFreq;
+                minTau = Math.max(2, Math.floor(hintTau / 1.0595));
+                maxTau = Math.min(Math.ceil(hintTau * 1.0595), halfN - 1);
+            } else {
+                minTau = Math.floor(sampleRate / TUNER_MAX_FREQ);
+                maxTau = Math.min(Math.floor(sampleRate / TUNER_MIN_FREQ), halfN - 1);
+            }
+            if (maxTau <= minTau) return 0;
+
+            var yin = new Float32Array(halfN);
+            for (var tau = 0; tau < halfN; tau++) {
+                var sum = 0;
+                for (var i = 0; i < halfN; i++) {
+                    var d = buffer[i] - buffer[i + tau];
+                    sum += d * d;
+                }
+                yin[tau] = sum;
+            }
+
+            yin[0] = 1.0;
+            var runningSum = 0;
+            for (var t = 1; t < halfN; t++) {
+                runningSum += yin[t];
+                yin[t] = runningSum > 0 ? yin[t] * t / runningSum : 1.0;
+            }
+
+            // 经典 YIN：找第一个跨过阈值的局部极小（对弱信号谐波误判更可靠）
+            var tauEstimate = -1;
+            for (var tt = minTau; tt < maxTau; tt++) {
+                if (yin[tt] < TUNER_YIN_THRESHOLD) {
+                    while (tt + 1 < maxTau && yin[tt + 1] < yin[tt]) tt++;
+                    tauEstimate = tt;
+                    break;
+                }
+            }
+            if (tauEstimate === -1) return 0;
+
+            // 抛物线插值
+            var refinedTau = tauEstimate;
+            if (tauEstimate > 0 && tauEstimate < halfN - 1) {
+                var s0 = yin[tauEstimate - 1], s1 = yin[tauEstimate], s2 = yin[tauEstimate + 1];
+                var denom = 2.0 * (2.0 * s1 - s2 - s0);
+                if (denom !== 0) {
+                    var adj = (s2 - s0) / denom;
+                    if (isFinite(adj)) refinedTau = tauEstimate + adj;
+                }
+            }
+            if (refinedTau < minTau || refinedTau > maxTau) return 0;
+            var freq = sampleRate / refinedTau;
+            if (freq < TUNER_MIN_FREQ || freq > TUNER_MAX_FREQ) return 0;
+            return freq;
+        }
+
+        function tunerCentsDiff(detected, target) {
+            if (detected <= 0 || target <= 0) return 0;
+            return 1200 * Math.log(detected / target) / Math.log(2);
+        }
+
+        async function toggleTuner() {
+            var btn = document.getElementById('tunerBtn');
+            if (tunerRunning) {
+                stopTuner();
+                return;
+            }
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                var msg = '当前浏览器不支持音频录入。';
+                if (location.protocol !== 'https:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+                    msg += '\n\n需要 HTTPS 或 localhost 才能使用麦克风。';
+                    msg += '\n如果用手机访问，请用 https:// 地址。';
+                }
+                alert(msg);
+                return;
+            }
+            try {
+                // 先请求一次权限以便看到设备标签
+                var tempStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                tempStream.getTracks().forEach(function(t) { t.stop(); });
+
+                var deviceId = document.getElementById('tunerDevice').value;
+                // 关键：关闭浏览器的回声消除、降噪、自动增益，避免吉他信号被处理掉
+                var audioConstraints = {
+                    echoCancellation: false,
+                    noiseSuppression: false,
+                    autoGainControl: false
+                };
+                if (deviceId) audioConstraints.deviceId = { exact: deviceId };
+                tunerStream = await navigator.mediaDevices.getUserMedia({ audio: audioConstraints });
+
+                tunerAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                await tunerAudioCtx.resume();
+                var source = tunerAudioCtx.createMediaStreamSource(tunerStream);
+
+                var trackSettings = tunerStream.getAudioTracks()[0].getSettings();
+                var channelCount = trackSettings.channelCount || 1;
+
+                tunerAnalyser = tunerAudioCtx.createAnalyser();
+                tunerAnalyser.fftSize = 4096;
+                tunerAnalyser.smoothingTimeConstant = 0;
+
+                // 20 倍增益，解决手机麦克风信号弱的问题
+                tunerGainNode = tunerAudioCtx.createGain();
+                tunerGainNode.gain.value = 20;
+
+                // 带通滤波：高通 60Hz 去工频嗡嗡、低频噪音；低通 1500Hz 去高频噪音
+                tunerHighpass = tunerAudioCtx.createBiquadFilter();
+                tunerHighpass.type = 'highpass';
+                tunerHighpass.frequency.value = 60;
+                tunerHighpass.Q.value = 0.707;
+
+                tunerLowpass = tunerAudioCtx.createBiquadFilter();
+                tunerLowpass.type = 'lowpass';
+                tunerLowpass.frequency.value = 1500;
+                tunerLowpass.Q.value = 0.707;
+
+                if (tunerSelectedChannel >= 0 && channelCount > 1) {
+                    var splitter = tunerAudioCtx.createChannelSplitter(channelCount);
+                    source.connect(splitter);
+                    var merger = tunerAudioCtx.createChannelMerger(1);
+                    splitter.connect(merger, Math.min(tunerSelectedChannel, channelCount - 1), 0);
+                    merger.connect(tunerGainNode);
+                } else {
+                    source.connect(tunerGainNode);
+                }
+                // 信号链：gain → highpass → lowpass → analyser
+                tunerGainNode.connect(tunerHighpass);
+                tunerHighpass.connect(tunerLowpass);
+                tunerLowpass.connect(tunerAnalyser);
+
+                tunerFreqHistory = [];
+                tunerSmoothedFreq = 0;
+                tunerLastDisplayUpdate = 0;
+                tunerRunning = true;
+                btn.textContent = '停止调音';
+                btn.classList.add('active');
+                detectPitch();
+
+                renderChannels(channelCount);
+            } catch (err) {
+                var errMsg = '无法访问音频设备';
+                if (err.name === 'NotAllowedError') {
+                    errMsg = '麦克风权限被拒绝，请在浏览器设置中允许访问麦克风';
+                } else if (err.name === 'NotFoundError') {
+                    errMsg = '未找到音频输入设备，请检查麦克风或声卡连接';
+                } else if (err.name === 'NotReadableError') {
+                    errMsg = '音频设备被其他程序占用，请关闭其他使用音频的程序后重试';
+                } else {
+                    errMsg += ': ' + err.message;
+                }
+                alert(errMsg);
+            }
+        }
+
+        function stopTuner() {
+            tunerRunning = false;
+            if (tunerRaf) { cancelAnimationFrame(tunerRaf); tunerRaf = null; }
+            if (tunerStream) { tunerStream.getTracks().forEach(function(t) { t.stop(); }); }
+            tunerStream = null;
+            if (tunerAnalyser) { tunerAnalyser.disconnect(); tunerAnalyser = null; }
+            if (tunerHighpass) { tunerHighpass.disconnect(); tunerHighpass = null; }
+            if (tunerLowpass) { tunerLowpass.disconnect(); tunerLowpass = null; }
+            if (tunerGainNode) { tunerGainNode.disconnect(); tunerGainNode = null; }
+            if (tunerAudioCtx) { tunerAudioCtx.close(); tunerAudioCtx = null; }
+            tunerSmoothedFreq = 0;
+            tunerFreqHistory = [];
+            var btn = document.getElementById('tunerBtn');
+            btn.textContent = '开始调音';
+            btn.classList.remove('active');
+            document.getElementById('tunerNote').innerHTML = '-';
+            document.getElementById('tunerStatus').textContent = '选择输入源后点击开始';
+            document.getElementById('tunerStatus').className = 'tuner-status-text';
+            document.getElementById('tunerFrequency').textContent = '-- Hz';
+            document.getElementById('tunerIndicator').style.left = '50%';
+            document.getElementById('tunerIndicator').className = 'tuner-indicator';
+        }
+        
+        async function refreshDeviceList() {
+            try {
+                // 先请求权限
+                var tempStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                tempStream.getTracks().forEach(function(t) { t.stop(); });
+                var devices = await navigator.mediaDevices.enumerateDevices();
+                tunerDeviceList = devices.filter(function(d) { return d.kind === 'audioinput'; });
+                var select = document.getElementById('tunerDevice');
+                var currentVal = select.value;
+                select.innerHTML = '';
+                // 默认麦克风
+                var defOpt = document.createElement('option');
+                defOpt.value = '';
+                defOpt.textContent = '默认麦克风';
+                select.appendChild(defOpt);
+                tunerDeviceList.forEach(function(d, i) {
+                    var opt = document.createElement('option');
+                    opt.value = d.deviceId;
+                    opt.textContent = d.label || ('音频设备 ' + (i + 1));
+                    select.appendChild(opt);
+                });
+                // 恢复之前选择
+                if (currentVal) select.value = currentVal;
+                document.getElementById('tunerDeviceCount').textContent = tunerDeviceList.length + ' 个设备';
+            } catch (err) {
+                console.error('枚举设备失败:', err);
+                document.getElementById('tunerDeviceCount').textContent = '获取失败';
+            }
+        }
+        
+        function onTunerDeviceChange() {
+            // 如果正在运行，切换设备需要重启
+            if (tunerRunning) {
+                stopTuner();
+                toggleTuner();
+            }
+        }
+        
+        function renderChannels(count) {
+            var container = document.getElementById('tunerChannels');
+            if (!container) return;
+            container.innerHTML = '';
+            if (count <= 1) {
+                container.innerHTML = '<span style="color:#999;font-size:12px;">单声道设备</span>';
+                tunerSelectedChannel = -1;
+                return;
+            }
+            // 混合通道按钮
+            var allBtn = document.createElement('button');
+            allBtn.className = 'tuner-ch-btn' + (tunerSelectedChannel === -1 ? ' active' : '');
+            allBtn.textContent = '混合';
+            allBtn.onclick = function() {
+                tunerSelectedChannel = -1;
+                document.querySelectorAll('.tuner-ch-btn').forEach(function(b) { b.classList.remove('active'); });
+                allBtn.classList.add('active');
+                if (tunerRunning) { stopTuner(); toggleTuner(); }
+            };
+            container.appendChild(allBtn);
+            // 单通道按钮
+            for (var i = 0; i < count; i++) {
+                (function(ch) {
+                    var btn = document.createElement('button');
+                    btn.className = 'tuner-ch-btn' + (tunerSelectedChannel === ch ? ' active' : '');
+                    btn.textContent = 'CH' + (ch + 1);
+                    btn.onclick = function() {
+                        tunerSelectedChannel = ch;
+                        document.querySelectorAll('.tuner-ch-btn').forEach(function(b) { b.classList.remove('active'); });
+                        btn.classList.add('active');
+                        if (tunerRunning) { stopTuner(); toggleTuner(); }
+                    };
+                    container.appendChild(btn);
+                })(i);
+            }
+        }
+        
+        // 已移除的兼容函数
+        function onTunerTypeChange() {}
+        function enumerateDevices() { refreshDeviceList(); }
+        var metronomeTimer = null, currentBPM = 120, beatsPerMeasure = 4, currentBeat = 0;
+        var subdivIndex = 0;
+        var metroAudioCtx = null;
+
+        // 节奏型: [每拍音数, 标签, 名称]
+        var subdivisions = [
+            { n: 1, label: '\u2669', name: '四分' },
+            { n: 2, label: '\u266B', name: '八分' },
+            { n: 3, label: '\u266B\u266A', name: '三连' },
+            { n: 4, label: '\u266C', name: '十六' },
+            { n: 6, label: '\u266B\u266B', name: '六连' }
+        ];
+
+        function getTempoName(bpm) {
+            if (bpm < 40) return 'Grave';
+            if (bpm < 55) return 'Largo';
+            if (bpm < 65) return 'Larghetto';
+            if (bpm < 73) return 'Adagio';
+            if (bpm < 78) return 'Andante';
+            if (bpm < 86) return 'Andantino';
+            if (bpm < 98) return 'Moderato';
+            if (bpm < 109) return 'Allegretto';
+            if (bpm < 132) return 'Allegro';
+            if (bpm < 140) return 'Vivace';
+            if (bpm < 178) return 'Presto';
+            return 'Prestissimo';
+        }
+
+        function updateBPM(val) {
+            currentBPM = Math.max(20, Math.min(300, parseInt(val)));
+            document.getElementById('bpmDisplay').textContent = currentBPM;
+            document.getElementById('bpmSlider').value = currentBPM;
+            document.getElementById('tempoName').textContent = getTempoName(currentBPM);
+            var pct = ((currentBPM - 20) / 280) * 100;
+            document.getElementById('bpmSlider').style.background = 'linear-gradient(90deg,#e08860 ' + pct + '%,#e0e0e0 ' + pct + '%)';
+            if (metronomeTimer) { stopMetronomeSound(); startMetronomeSound(); }
+        }
+
+        function changeBPM(delta) { updateBPM(currentBPM + delta); }
+
+        function changeBeats(delta) {
+            beatsPerMeasure = Math.max(1, Math.min(12, beatsPerMeasure + delta));
+            document.getElementById('beatsDisplay').textContent = beatsPerMeasure;
+            renderDots();
+            if (metronomeTimer) { currentBeat = 0; stopMetronomeSound(); startMetronomeSound(); }
+        }
+
+        function renderDots() {
+            var container = document.getElementById('metroDots');
+            container.innerHTML = '';
+            for (var i = 0; i < beatsPerMeasure; i++) {
+                var dot = document.createElement('div');
+                dot.className = 'metro-dot';
+                dot.id = 'dot-' + i;
+                container.appendChild(dot);
+            }
+        }
+
+        function tapBPM() {
+            // 已移除点击BPM功能
+        }
+
+        function toggleMetronome() {
+            var btn = document.getElementById('metronomeBtn');
+            if (metronomeTimer) {
+                stopMetronomeSound();
+                btn.textContent = '\u25B6 \u5F00\u59CB';
+                document.querySelectorAll('.metro-dot').forEach(function(d) { d.classList.remove('on', 'accent'); });
+            } else {
+                currentBeat = 0;
+                startMetronomeSound();
+                btn.textContent = '\u23F8 \u505C\u6B62';
+            }
+        }
+
+        function startMetronomeSound() {
+            if (!metroAudioCtx) metroAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            var subdiv = subdivisions[subdivIndex];
+            var subInterval = 60000 / currentBPM / subdiv.n;
+            var subBeat = 0;
+
+            metronomeTimer = setInterval(function() {
+                playBeat(subdiv, subBeat);
+                subBeat = (subBeat + 1) % (beatsPerMeasure * subdiv.n);
+            }, subInterval);
+        }
+
+        function playBeat(subdiv, subBeat) {
+            var isMainBeat = (subBeat % subdiv.n === 0);
+            var mainBeatIdx = Math.floor(subBeat / subdiv.n) % beatsPerMeasure;
+            var isFirst = (mainBeatIdx === 0) && isMainBeat;
+            var accent = isFirst && document.getElementById('accentFirst').checked;
+
+            var osc = metroAudioCtx.createOscillator();
+            var gain = metroAudioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(metroAudioCtx.destination);
+
+            if (accent) {
+                osc.frequency.value = 1500;
+                gain.gain.setValueAtTime(0.6, metroAudioCtx.currentTime);
+            } else if (isMainBeat) {
+                osc.frequency.value = 1000;
+                gain.gain.setValueAtTime(0.35, metroAudioCtx.currentTime);
+            } else {
+                osc.frequency.value = 800;
+                gain.gain.setValueAtTime(0.15, metroAudioCtx.currentTime);
+            }
+            gain.gain.exponentialRampToValueAtTime(0.001, metroAudioCtx.currentTime + 0.06);
+            osc.start(metroAudioCtx.currentTime);
+            osc.stop(metroAudioCtx.currentTime + 0.06);
+
+            if (isMainBeat) {
+                document.querySelectorAll('.metro-dot').forEach(function(d) { d.classList.remove('on', 'accent'); });
+                var dot = document.getElementById('dot-' + mainBeatIdx);
+                if (dot) { dot.classList.add(accent ? 'accent' : 'on'); }
+            }
+        }
+
+        function stopMetronomeSound() {
+            if (metronomeTimer) { clearInterval(metronomeTimer); metronomeTimer = null; }
+        }
+    </script>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">🎸</div>
+            <h1>大猪吉他练习助手</h1>
+            <p>专业的吉他练习工具集合</p>
+        </div>
+
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('bili', this)">📺 视频解析</button>
+            <button class="tab-btn" onclick="switchTab('chords', this)">🎸 和弦表</button>
+            <button class="tab-btn" onclick="switchTab('metronome', this)">🎵 节拍器</button>
+            <button class="tab-btn" onclick="switchTab('tuner', this)">🎤 调音器</button>
+        </div>
+
+        <!-- B站解析 -->
+        <div class="card active" id="bili-card">
+            <h2>📺 B站视频解析</h2>
+            <div class="bili-input">
+                <input type="text" id="biliUrl" placeholder="输入BV号、av号、链接或手机分享内容" onkeypress="if(event.key==='Enter')parseBili()">
+                <select class="bili-quality" id="biliQuality">
+                    <option value="80" selected>1080P</option>
+                    <option value="64">720P</option>
+                    <option value="32">480P</option>
+                    <option value="16">360P</option>
+                </select>
+                <button class="btn-primary" onclick="parseBili()">解析</button>
+            </div>
+            <div id="biliResults"></div>
+            <div class="tip-box">💡 提示：支持 BV号（BV1xx）、av号（av123）或完整B站链接</div>
+
+            <!-- 本地视频变速 -->
+            <div class="local-section">
+                <h3>💻 本地视频变速</h3>
+                <div class="local-row">
+                    <div class="local-file-wrap">
+                        <label class="local-file-label" id="localFileLabel" for="localFileInput">📂 点击选择本地视频文件</label>
+                        <input type="file" id="localFileInput" accept="video/*" onchange="onLocalFileChange()">
+                        <div class="local-file-name" id="localFileName"></div>
+                    </div>
+                    <button class="btn-primary" onclick="submitLocalSpeed()">上传并播放</button>
+                </div>
+                <div class="tip-box">💡 支持 mp4/mkv/mov 等常见格式；上传后可通过播放器变速滑块实时调速（0.25x ~ 3.0x），拖拽进度条丝滑跳转；满意可下载原片</div>
+                <div class="local-progress" id="localProgress">
+                    <div id="localProgressText">准备中…</div>
+                    <div class="local-progress-bar"><div class="local-progress-bar-fill" id="localProgressFill" style="width:0%"></div></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 和弦表 -->
+        <div class="card" id="chords-card">
+            <h2>🎸 各调性和弦级数表</h2>
+            <div class="key-selector" id="keySelector"></div>
+            <div class="chord-row" id="chordRow"></div>
+            <div id="chordDetail"></div>
+        </div>
+
+        <!-- 节拍器 -->
+        <div class="card" id="metronome-card">
+            <div class="metronome-wrap">
+                <span class="metro-bpm-label">BPM</span>
+                <div class="metro-bpm-num" id="bpmDisplay">120</div>
+                <div class="metro-tempo-name" id="tempoName">Allegro</div>
+
+                <div class="metro-slider-row">
+                    <button class="metro-pm-btn" onclick="changeBPM(-1)">−</button>
+                    <input type="range" class="metro-slider" id="bpmSlider" min="20" max="300" value="120" oninput="updateBPM(this.value)">
+                    <button class="metro-pm-btn" onclick="changeBPM(1)">+</button>
+                </div>
+
+                <div style="text-align:center;">
+                    <span class="metro-bpm-label">节拍</span>
+                </div>
+                <div class="metro-dots" id="metroDots"></div>
+
+                <div class="metro-btns">
+                    <button class="metro-btn-start" id="metronomeBtn" onclick="toggleMetronome()">▶ 开始</button>
+                </div>
+
+                <div class="metro-settings">
+                    <div class="metro-row">
+                        <span class="metro-row-label">节拍</span>
+                        <div class="metro-row-right">
+                            <button class="metro-num-btn" onclick="changeBeats(-1)">−</button>
+                            <span class="metro-num-val" id="beatsDisplay">4</span>
+                            <button class="metro-num-btn" onclick="changeBeats(1)">+</button>
+                        </div>
+                    </div>
+                    <div class="metro-row">
+                        <span class="metro-row-label">压力第一拍</span>
+                        <div class="metro-row-right">
+                            <input type="checkbox" class="metro-check" id="accentFirst" checked>
+                        </div>
+                    </div>
+                    <div class="metro-row" style="flex-direction:column;align-items:flex-start;gap:10px;">
+                        <span class="metro-row-label">节奏型</span>
+                        <div class="metro-subdiv" id="subdivBtns"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 调音器 -->
+        <div class="card" id="tuner-card">
+            <div class="tuner-wrap">
+                <div class="tuner-note-display" id="tunerNote">-</div>
+                <div class="tuner-status-row">
+                    <span class="tuner-status-text" id="tunerStatus">选择输入源后点击开始</span>
+                    <span class="tuner-freq" id="tunerFrequency">-- Hz</span>
+                </div>
+                <div class="tuner-meter-wrap">
+                    <div class="tuner-meter">
+                        <div class="tuner-meter-center"></div>
+                        <div class="tuner-indicator" id="tunerIndicator"></div>
+                    </div>
+                </div>
+
+                <div class="tuner-preset-row">
+                    <select class="tuner-preset-select" id="tunerPreset" onchange="onTunerPresetChange()"></select>
+                </div>
+                <div class="tuner-mode-row">
+                    <div class="tuner-mode-pill on" id="tunerModeAuto" onclick="setTunerAutoDetect(true)">🎯 自动选弦</div>
+                    <div class="tuner-mode-pill" id="tunerModeManual" onclick="setTunerAutoDetect(false)">✋ 手动选弦</div>
+                </div>
+                <div class="tuner-strings" id="tunerStrings"></div>
+
+                <button class="tuner-btn" id="tunerBtn" onclick="toggleTuner()">开始调音</button>
+
+                <div class="tuner-settings">
+                    <div class="tuner-settings-title">音频输入设置 <span id="tunerDeviceCount" style="font-weight:normal;color:#999;font-size:12px;"></span></div>
+                    <div class="tuner-input-row">
+                        <span class="tuner-input-label">设备</span>
+                        <select class="tuner-select" id="tunerDevice" onchange="onTunerDeviceChange()">
+                            <option value="">默认麦克风</option>
+                        </select>
+                        <button onclick="refreshDeviceList()" style="padding:6px 12px;border:1px solid rgba(118,75,162,0.3);border-radius:8px;background:rgba(255,255,255,0.15);color:#764ba2;cursor:pointer;font-size:12px;">刷新</button>
+                    </div>
+                    <div class="tuner-input-row">
+                        <span class="tuner-input-label">通道</span>
+                        <div class="tuner-channels" id="tunerChannels">
+                            <span style="color:#999;font-size:12px;">点击开始调音后显示通道</span>
+                        </div>
+                    </div>
+                    <div style="margin-top:10px;padding:10px;background:rgba(118,75,162,0.08);border-radius:8px;font-size:11px;color:#888;line-height:1.5;">
+                        💡 <b>麦克风调音</b>：选默认麦克风即可<br>
+                        🎸 <b>声卡调音</b>：选择你的声卡设备（如 Uports2 Dyna），吉他信号通常在 CH2<br>
+                        ⚠️ 手机需要 HTTPS 才能使用麦克风
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script th:inline="none">
+        // ================= 本地视频变速 =================
+        function onLocalFileChange() {
+            var input = document.getElementById('localFileInput');
+            var nameEl = document.getElementById('localFileName');
+            var labelEl = document.getElementById('localFileLabel');
+            if (input.files && input.files[0]) {
+                var f = input.files[0];
+                var sizeMb = (f.size / (1024 * 1024)).toFixed(1);
+                nameEl.textContent = '已选择：' + f.name + '（' + sizeMb + ' MB）';
+                labelEl.textContent = '📂 重新选择文件';
+            } else {
+                nameEl.textContent = '';
+                labelEl.textContent = '📂 点击选择本地视频文件';
+            }
+        }
+
+        function onLocalSpeedChange() {
+            var v = parseFloat(document.getElementById('localSpeedRange').value);
+            document.getElementById('localSpeedValue').textContent = v.toFixed(2) + 'x';
+        }
+
+        function submitLocalSpeed() {
+            var input = document.getElementById('localFileInput');
+            if (!input.files || !input.files[0]) {
+                alert('请先选择视频文件');
+                return;
+            }
+            var file = input.files[0];
+
+            var progressEl = document.getElementById('localProgress');
+            var progressText = document.getElementById('localProgressText');
+            var progressFill = document.getElementById('localProgressFill');
+            progressEl.classList.add('active');
+            progressText.textContent = '上传中…';
+            progressFill.style.width = '0%';
+
+            var fd = new FormData();
+            fd.append('file', file);
+
+            var xhr = new XMLHttpRequest();
+            xhr.open('POST', '/api/local/upload', true);
+
+            xhr.upload.onprogress = function(e) {
+                if (e.lengthComputable) {
+                    var pct = (e.loaded / e.total) * 90;
+                    progressFill.style.width = pct.toFixed(1) + '%';
+                    progressText.textContent = '上传中… ' + pct.toFixed(0) + '%';
+                }
+            };
+
+            xhr.onload = function() {
+                if (xhr.status === 200) {
+                    try {
+                        var data = JSON.parse(xhr.responseText);
+                        if (data.error) {
+                            progressText.textContent = '❌ ' + data.error;
+                            progressFill.style.width = '0%';
+                            return;
+                        }
+
+                        progressFill.style.width = '100%';
+                        progressText.textContent = '✓ 上传完成，正在加载';
+
+                        // 创建播放器
+                        var playerEl = document.getElementById('localPlayer');
+                        if (!playerEl) {
+                            playerEl = document.createElement('div');
+                            playerEl.id = 'localPlayer';
+                            playerEl.style.cssText = 'margin-top:18px; padding:16px; background:linear-gradient(135deg,#f8f9fa,#e9ecef); border-radius:12px; display:none;';
+                            progressEl.parentNode.appendChild(playerEl);
+                        }
+                        playerEl.style.display = 'block';
+
+                        var video = playerEl.querySelector('video');
+                        if (!video) {
+                            video = document.createElement('video');
+                            video.setAttribute('controls', '');
+                            video.setAttribute('autoplay', '');
+                            video.style.cssText = 'width:100%; max-height:480px; background:#000; border-radius:8px; display:block; margin-bottom:12px;';
+                            playerEl.appendChild(video);
+                        }
+
+                        video.src = data.url;
+
+                        // 变速控制条
+                        var speedBar = playerEl.querySelector('.local-speed-bar');
+                        if (!speedBar) {
+                            speedBar = document.createElement('div');
+                            speedBar.className = 'local-speed-bar';
+                            speedBar.style.cssText = 'display:flex; align-items:center; gap:12px; padding:10px 14px; background:rgba(118,75,162,0.08); border-radius:10px; margin-bottom:10px;';
+                            playerEl.appendChild(speedBar);
+
+                            speedBar.innerHTML =
+                                '<label style="font-weight:600;color:#764ba2;white-space:nowrap;">实时变速</label>' +
+                                '<input type="range" id="localPlayerSpeed" min="0.25" max="3.0" step="0.05" value="1.0" style="flex:1;accent-color:#764ba2;" oninput="onLocalPlayerSpeedChange()">' +
+                                '<span id="localPlayerSpeedVal" style="min-width:50px;text-align:center;font-weight:bold;color:#764ba2;font-size:15px;">1.00x</span>' +
+                                '<button class="local-dl-btn btn-primary" style="padding:8px 16px;font-size:14px;margin:0;" onclick="window.location.href=\'/api/local/file/' + data.tempId + '\'">📥 下载原片</button>';
+
+                            // 播放器加载完毕后隐藏进度条
+                            video.addEventListener('loadeddata', function() {
+                                setTimeout(function() { progressEl.classList.remove('active'); }, 1000);
+                            });
+                        }
+
+                    } catch (e) {
+                        progressText.textContent = '❌ 解析响应失败';
+                        progressFill.style.width = '0%';
+                    }
+                } else {
+                    progressText.textContent = '❌ 上传失败（HTTP ' + xhr.status + '）';
+                    progressFill.style.width = '0%';
+                }
+            };
+
+            xhr.onerror = function() {
+                progressText.textContent = '❌ 网络错误';
+                progressFill.style.width = '0%';
+            };
+
+            xhr.send(fd);
+        }
+
+        function onLocalPlayerSpeedChange() {
+            var v = parseFloat(document.getElementById('localPlayerSpeed').value);
+            document.getElementById('localPlayerSpeedVal').textContent = v.toFixed(2) + 'x';
+            var playerEl = document.getElementById('localPlayer');
+            if (playerEl) {
+                var video = playerEl.querySelector('video');
+                if (video) video.playbackRate = v;
+            }
+        }
+
+        // ================= B站解析 =================
+        async function parseBili() {
+            const url = document.getElementById('biliUrl').value.trim();
+            const quality = document.getElementById('biliQuality').value;
+            const results = document.getElementById('biliResults');
+            
+            if (!url) { results.innerHTML = '<div class="empty-state">请输入B站视频链接或BV号</div>'; return; }
+            results.innerHTML = '<div class="loading">正在解析...</div>';
+
+            try {
+                const res = await fetch('/api/bilibili/info?url=' + encodeURIComponent(url) + '&qn=' + quality);
+                const data = await res.json();
+                
+                if (data.code !== 0) {
+                    results.innerHTML = '<div class="empty-state">解析失败: ' + (data.message || '未知错误') + '</div>';
+                    return;
+                }
+
+                const bvid = data.bvid, cid = data.cid, title = data.title, duration = data.duration;
+                results.innerHTML = `
+                    <div class="video-list">
+                        <div class="video-item">
+                            <div class="video-title">${title}</div>
+                            <div class="video-info">时长: ${formatDuration(duration)}</div>
+                            <div class="video-actions">
+                                <button class="video-btn" onclick="playVideo('/api/bilibili/play?bvid=${bvid}&cid=${cid}&qn=${quality}', '${escapeHtml(title)}')">▶️ 播放</button>
+                                <button class="video-btn" onclick="downloadVideo('/api/bilibili/download?bvid=${bvid}&cid=${cid}&qn=${quality}&filename=${encodeURIComponent(title)}')">💾 下载</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } catch (e) {
+                results.innerHTML = '<div class="empty-state">解析失败: ' + e.message + '</div>';
+            }
+        }
+
+        function formatDuration(seconds) {
+            const h = Math.floor(seconds / 3600);
+            const m = Math.floor((seconds % 3600) / 60);
+            const s = seconds % 60;
+            return h > 0 ? `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}` : `${m}:${s.toString().padStart(2, '0')}`;
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML.replace(/'/g, "\\'").replace(/"/g, '\\"');
+        }
+
+        function playVideo(url, title) {
+            const existing = document.querySelector('.video-player-container');
+            if (existing) existing.remove();
+            document.getElementById('biliResults').insertAdjacentHTML('beforeend', `
+                <div class="video-player-container" style="padding:15px;">
+                    <div style="background:#000;border-radius:12px;overflow:hidden;margin-bottom:15px;position:relative;width:100%;">
+                        <video controls autoplay style="width:100%;display:block;max-width:100%;" id="biliVideo">
+                            <source src="${url}" type="video/mp4">
+                        </video>
+                    </div>
+                    <div style="background:linear-gradient(135deg,#667eea,#764ba2);border-radius:12px;padding:15px 20px;color:white;margin-top:10px;">
+                        <p style="margin:0 0 10px 0;font-weight:bold;font-size:16px;">🎬 ${title}</p>
+                        <div style="display:flex;align-items:center;gap:10px;">
+                            <span style="font-size:13px;white-space:nowrap;">速度:</span>
+                            <input type="range" min="0.25" max="2" step="0.05" value="1" style="flex:1;accent-color:#ffd700;height:6px;" onchange="this.nextElementSibling.textContent=this.value+'x';document.getElementById('biliVideo').playbackRate=parseFloat(this.value)">
+                            <span style="background:#ffd700;color:#333;padding:4px 10px;border-radius:15px;font-weight:bold;font-size:13px;">1x</span>
+                        </div>
+                    </div>
+                </div>
+            `);
+        }
+
+        function downloadVideo(url) { window.location.href = url; }
+
+        // ================= 和弦表 =================
+        const keys = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
+        
+        // 和弦数据库: [六弦到一弦, -1=不弹]
+        // 按图片标准指法
+        const chordLevels = {
+            '1':  { name: '', interval: '1-3-5' },
+            '2':  { name: 'm', interval: '2-4-6' },
+            '3':  { name: 'm', interval: '3-5-7' },
+            '4':  { name: '', interval: '4-6-1' },
+            '5':  { name: '', interval: '5-7-2' },
+            '6':  { name: 'm', interval: '6-1-3' },
+            '7':  { name: '7', interval: '5-7-2-4' }
+        };
+
+        // 各调性和弦指法 [六弦,五弦,四弦,三弦,二弦,一弦]，barre标注横按品位
+        const chordFingers = {
+            'C': {
+                '1': [-1, 3, 2, 0, 1, 0],
+                '2': [-1, -1, 0, 2, 3, 1],
+                '3': [0, 0, 2, 2, 0, 0],
+                '4': { fret: 1, fingers: [1, 1, 1, 2, 3, 1] },
+                '5': [3, 2, 0, 0, 0, 3],
+                '6': [-1, 0, 2, 2, 1, 0],
+                '7': [3, 2, 0, 0, 0, 1]
+            },
+            'D': {
+                '1': [-1, -1, 0, 2, 3, 2],
+                '2': [0, 0, 2, 2, 0, 0],
+                '3': { fret: 2, fingers: [2, -1, 2, 4, 4, 2] },
+                '4': [3, 2, 0, 0, 0, 3],
+                '5': [-1, 0, 2, 2, 2, 0],
+                '6': { fret: 2, fingers: [2, -1, 4, 4, 3, 2] },
+                '7': [-1, 0, 2, 0, 2, 0]
+            },
+            'E': {
+                '1': [0, 2, 2, 1, 0, 0],
+                '2': { fret: 2, fingers: [2, -1, 2, 4, 4, 2] },
+                '3': { fret: 4, fingers: [4, -1, 4, 6, 6, 4] },
+                '4': [-1, 0, 2, 2, 2, 0],
+                '5': { fret: 2, fingers: [2, -1, 4, 4, 4, 2] },
+                '6': { fret: 4, fingers: [4, -1, 6, 6, 6, 4] },
+                '7': { fret: 2, fingers: [2, -1, 1, 2, 0, 0] }
+            },
+            'F': {
+                '1': { fret: 1, fingers: [1, -1, 3, 3, 2, 1] },
+                '2': { fret: 3, fingers: [3, -1, 3, 5, 5, 3] },
+                '3': [-1, 0, 2, 2, 1, 0],
+                '4': { fret: 1, fingers: [1, -1, 1, 3, 3, 1] },
+                '5': [-1, 3, 2, 0, 1, 0],
+                '6': [-1, -1, 0, 2, 3, 1],
+                '7': [-1, 3, 2, 3, 1, 0]
+            },
+            'G': {
+                '1': [3, 2, 0, 0, 0, 3],
+                '2': [-1, 0, 2, 2, 1, 0],
+                '3': { fret: 2, fingers: [2, -1, 2, 4, 4, 3] },
+                '4': [-1, 3, 2, 0, 1, 0],
+                '5': [-1, -1, 0, 2, 3, 2],
+                '6': [0, 0, 2, 2, 0, 0],
+                '7': [-1, -1, 0, 2, 1, 2]
+            },
+            'A': {
+                '1': [-1, 0, 2, 2, 2, 0],
+                '2': { fret: 2, fingers: [2, -1, 2, 4, 4, 3] },
+                '3': { fret: 4, fingers: [4, -1, 4, 6, 6, 6] },
+                '4': [-1, -1, 0, 2, 3, 2],
+                '5': [0, 2, 2, 1, 0, 0],
+                '6': { fret: 2, fingers: [2, -1, 4, 4, 2, 2] },
+                '7': [0, 2, 0, 1, 0, 0]
+            },
+            'B': {
+                '1': { fret: 2, fingers: [2, -1, 4, 4, 4, 2] },
+                '2': { fret: 4, fingers: [4, -1, 4, 6, 6, 6] },
+                '3': { fret: 6, fingers: [6, -1, 6, 8, 8, 7] },
+                '4': [0, 2, 2, 1, 0, 0],
+                '5': { fret: 2, fingers: [2, -1, 4, 4, 2, 2] },
+                '6': { fret: 4, fingers: [4, -1, 4, 6, 6, 5] },
+                '7': { fret: 2, fingers: [2, -1, 2, 2, 2, 3] }
+            }
+        };
+
+        const scaleNotes = {
+            'C': ['C', 'D', 'E', 'F', 'G', 'A', 'B'],
+            'D': ['D', 'E', 'F#', 'G', 'A', 'B', 'C#'],
+            'E': ['E', 'F#', 'G#', 'A', 'B', 'C#', 'D#'],
+            'F': ['F', 'G', 'A', 'Bb', 'C', 'D', 'E'],
+            'G': ['G', 'A', 'B', 'C', 'D', 'E', 'F#'],
+            'A': ['A', 'B', 'C#', 'D', 'E', 'F#', 'G#'],
+            'B': ['B', 'C#', 'D#', 'E', 'F#', 'G#', 'A#']
+        };
+
+        let currentKey = 'C';
+        let expandedChord = null;
+
+        function initChordTable() {
+            const selector = document.getElementById('keySelector');
+            keys.forEach(key => {
+                const btn = document.createElement('button');
+                btn.className = 'key-btn' + (key === currentKey ? ' active' : '');
+                btn.textContent = key + '调';
+                btn.onclick = () => selectKey(key);
+                selector.appendChild(btn);
+            });
+            renderChords(currentKey);
+        }
+
+        function selectKey(key) {
+            currentKey = key;
+            expandedChord = null;
+            document.querySelectorAll('.key-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.textContent === key + '调');
+            });
+            document.getElementById('chordDetail').classList.remove('visible');
+            document.getElementById('chordDetail').innerHTML = '';
+            document.getElementById('chordRow').style.display = 'flex';
+            renderChords(key);
+        }
+
+        // 生成迷你和弦图片（用于卡片显示）
+        function generateMiniChordIMG(key, level) {
+            return `<img src="/chord-images/${key}_${level}.png" alt="和弦指法"/>`;
+        }
+
+        function renderChords(key) {
+            const row = document.getElementById('chordRow');
+            const scale = scaleNotes[key];
+            const fingers = chordFingers[key];
+            row.innerHTML = '';
+
+            const levelData = [
+                { level: 'I', num: '1', roman: '一级', scaleIdx: 0 },
+                { level: 'II', num: '2', roman: '二级', scaleIdx: 1 },
+                { level: 'III', num: '3', roman: '三级', scaleIdx: 2 },
+                { level: 'IV', num: '4', roman: '四级', scaleIdx: 3 },
+                { level: 'V', num: '5', roman: '五级', scaleIdx: 4 },
+                { level: 'VI', num: '6', roman: '六级', scaleIdx: 5 },
+                { level: 'VII', num: '7', roman: '七级', scaleIdx: 4 }  // 七级和弦根音是五级音
+            ];
+
+            levelData.forEach((item) => {
+                const chord = chordLevels[item.num];
+                const rootNote = scale[item.scaleIdx];
+                const chordName = rootNote + chord.name;
+
+                const cell = document.createElement('div');
+                cell.className = 'chord-cell';
+                cell.innerHTML = `
+                    <div class="chord-level">${item.level} (${item.roman})</div>
+                    <div class="chord-name">${chordName}</div>
+                    <div class="chord-interval">${chord.interval}</div>
+                    <div class="chord-mini-fret">${generateMiniChordIMG(key, item.num)}</div>
+                `;
+                cell.onclick = () => toggleChord(chordName, key, item.num, chord.interval, item.level, cell);
+                row.appendChild(cell);
+            });
+        }
+
+        function toggleChord(name, key, level, interval, levelName, cell) {
+            const row = document.getElementById('chordRow');
+            const detail = document.getElementById('chordDetail');
+            
+            if (expandedChord === name) {
+                // 再次点击，收缩
+                expandedChord = null;
+                cell.classList.remove('expanded');
+                row.style.display = 'flex';
+                detail.classList.remove('visible');
+                detail.innerHTML = '';
+            } else {
+                // 展开显示详情
+                expandedChord = name;
+                document.querySelectorAll('.chord-cell').forEach(c => c.classList.remove('expanded'));
+                cell.classList.add('expanded');
+                
+                // 隐藏和弦行，显示详情
+                row.style.display = 'none';
+                
+                detail.innerHTML = `
+                    <div style="display:inline-block;text-align:center;">
+                        <h3 style="color:#764ba2;margin-bottom:20px">${name} 和弦 (${levelName}级) - 音程: ${interval}</h3>
+                        <img src="/chord-images/${key}_${level}.png" style="max-width:400px;width:100%;height:auto;" alt="${name}和弦指法"/>
+                        <br>
+                        <button onclick="collapseChord()" style="margin-top:20px;padding:10px 25px;background:#ddd;border:none;border-radius:8px;cursor:pointer;">← 返回和弦表</button>
+                    </div>
+                `;
+                detail.classList.add('visible');
+            }
+        }
+        
+        function collapseChord() {
+            expandedChord = null;
+            document.querySelectorAll('.chord-cell').forEach(c => c.classList.remove('expanded'));
+            document.getElementById('chordRow').style.display = 'flex';
+            document.getElementById('chordDetail').classList.remove('visible');
+            document.getElementById('chordDetail').innerHTML = '';
+        }
+
+        // ================= 节拍器初始化 =================
+        function initSubdivBtns() {
+            var container = document.getElementById('subdivBtns');
+            subdivisions.forEach(function(s, i) {
+                var btn = document.createElement('button');
+                btn.className = 'metro-subdiv-btn' + (i === subdivIndex ? ' active' : '');
+                btn.innerHTML = '<span class="subdiv-label">' + s.label + '</span><span class="subdiv-name">' + s.name + '</span>';
+                btn.title = '每拍 ' + s.n + ' 音 - ' + s.name;
+                btn.onclick = function() {
+                    subdivIndex = i;
+                    document.querySelectorAll('.metro-subdiv-btn').forEach(function(b) { b.classList.remove('active'); });
+                    btn.classList.add('active');
+                    if (metronomeTimer) { currentBeat = 0; stopMetronomeSound(); startMetronomeSound(); }
+                };
+                container.appendChild(btn);
+            });
+        }
+        renderDots();
+        initSubdivBtns();
+        updateBPM(120);
+
+        // 调音器 - 主检测循环（YIN + 中位数平滑 + EMA + 自动选弦）
+        function detectPitch() {
+            if (!tunerRunning) return;
+            var buffer = new Float32Array(tunerAnalyser.fftSize);
+            tunerAnalyser.getFloatTimeDomainData(buffer);
+
+            // RMS 信号门限
+            var rms = 0;
+            for (var i = 0; i < buffer.length; i++) rms += buffer[i] * buffer[i];
+            rms = Math.sqrt(rms / buffer.length);
+
+            var noteEl = document.getElementById('tunerNote');
+            var freqEl = document.getElementById('tunerFrequency');
+            var statusEl = document.getElementById('tunerStatus');
+            var indicator = document.getElementById('tunerIndicator');
+
+            if (rms < 0.015) {
+                // 静默：重置平滑，显示目标
+                tunerSmoothedFreq = 0;
+                tunerFreqHistory = [];
+                var target0 = tunerCurrentPreset.strings[tunerSelectedIdx];
+                noteEl.innerHTML = target0.note;
+                freqEl.textContent = '目标 ' + target0.freq.toFixed(1) + ' Hz';
+                statusEl.textContent = '\ud83c\udfa4 请拨响琴弦';
+                statusEl.className = 'tuner-status-text';
+                indicator.className = 'tuner-indicator';
+                noteEl.classList.remove('in-tune');
+                indicator.style.left = '50%';
+                tunerRaf = requestAnimationFrame(detectPitch);
+                return;
+            }
+
+            // 手动模式：把当前选中弦频率作为 hint，锁定到 ±1 半音搜索范围（显著抗误判）
+            // 自动模式：不锁定，让 YIN 全范围搜索
+            var hintFreq = tunerAutoDetect ? 0 : tunerCurrentPreset.strings[tunerSelectedIdx].freq;
+            var rawFreq = yinPitchDetect(buffer, tunerAudioCtx.sampleRate, hintFreq);
+
+            if (rawFreq > 0) {
+                // 截尾均值：15 帧缓冲，去掉最高/最低各 3 个（离群值），剩余 9 帧求平均
+                tunerFreqHistory.push(rawFreq);
+                if (tunerFreqHistory.length > TUNER_FREQ_HISTORY_SIZE) tunerFreqHistory.shift();
+                var sorted = tunerFreqHistory.slice().sort(function(a, b) { return a - b; });
+                var trimCount = sorted.length >= 9 ? 3 : (sorted.length >= 5 ? 1 : 0);
+                var trimmed = sorted.slice(trimCount, sorted.length - trimCount);
+                var sum = 0;
+                for (var ti = 0; ti < trimmed.length; ti++) sum += trimmed[ti];
+                var medianFreq = sum / trimmed.length;
+
+                // EMA 平滑：跳变大时加快跟随，否则慢慢靠近（更平滑）
+                var jumpCents = tunerSmoothedFreq > 0 ? Math.abs(tunerCentsDiff(medianFreq, tunerSmoothedFreq)) : 0;
+                var alpha = jumpCents > 80 ? 0.3 : 0.05;
+                tunerSmoothedFreq = tunerSmoothedFreq === 0 ? medianFreq : tunerSmoothedFreq * (1 - alpha) + medianFreq * alpha;
+
+                // 自动选弦（30 音分内 + 300ms 防抖）
+                if (tunerAutoDetect) {
+                    var best = tunerSelectedIdx, minC = Infinity;
+                    tunerCurrentPreset.strings.forEach(function(s, idx) {
+                        var c = Math.abs(tunerCentsDiff(tunerSmoothedFreq, s.freq));
+                        if (c < minC) { minC = c; best = idx; }
+                    });
+                    var nowA = performance.now();
+                    if (minC < TUNER_AUTO_SWITCH_MAX_CENTS) {
+                        if (best !== tunerSelectedIdx) {
+                            if (tunerLastAutoIdx === best) {
+                                if (nowA - tunerLastAutoSwitchTime > TUNER_AUTO_SWITCH_DEBOUNCE_MS) {
+                                    selectTunerIdx(best);
+                                    tunerLastAutoSwitchTime = nowA;
+                                }
+                            } else {
+                                tunerLastAutoIdx = best;
+                                tunerLastAutoSwitchTime = nowA;
+                            }
+                        } else {
+                            tunerLastAutoIdx = best;
+                            tunerLastAutoSwitchTime = nowA;
+                        }
+                    }
+                }
+
+                var target = tunerCurrentPreset.strings[tunerSelectedIdx];
+                var cents = tunerCentsDiff(tunerSmoothedFreq, target.freq);
+                var hzDiff = tunerSmoothedFreq - target.freq;
+
+                // 滑块位置：cents 从 -50 到 +50 对应左到右
+                indicator.style.left = Math.max(2, Math.min(98, 50 + (cents / 50) * 48)) + '%';
+
+                // 文字显示节流（180ms）
+                var now = performance.now();
+                if (now - tunerLastDisplayUpdate > TUNER_DISPLAY_THROTTLE_MS) {
+                    tunerLastDisplayUpdate = now;
+                    noteEl.innerHTML = target.note;
+                    freqEl.textContent = tunerSmoothedFreq.toFixed(1) + ' Hz · 目标 ' + target.freq.toFixed(1);
+                }
+
+                // 判定：频率差 ±0.5Hz 内算达标
+                if (Math.abs(hzDiff) <= 0.5) {
+                    statusEl.textContent = '\u2713 完美音准';
+                    statusEl.className = 'tuner-status-text perfect';
+                    indicator.className = 'tuner-indicator perfect';
+                    noteEl.classList.add('in-tune');
+                    // 振动反馈（手机）
+                    if (navigator.vibrate && now - tunerLastVibrateTime > 800) {
+                        navigator.vibrate(30);
+                        tunerLastVibrateTime = now;
+                    }
+                } else {
+                    // 未达标：不显示偏高/偏低文字，避免页面跳动；仅依靠滑块位置反馈
+                    statusEl.textContent = '';
+                    statusEl.className = 'tuner-status-text';
+                    indicator.className = 'tuner-indicator';
+                    noteEl.classList.remove('in-tune');
+                }
+            } else {
+                // 有声音但未识别
+                var nowN = performance.now();
+                if (nowN - tunerLastDisplayUpdate > TUNER_DISPLAY_THROTTLE_MS) {
+                    freqEl.textContent = '\ud83d\udd0d 识别中…';
+                    tunerLastDisplayUpdate = nowN;
+                }
+            }
+
+            tunerRaf = requestAnimationFrame(detectPitch);
+        }
+
+        // 初始化调弦预设和琴弦按钮
+        renderTunerPresets();
+        renderTunerStrings();
+
+        initChordTable();
+    </script>
+</body>
+</html>
