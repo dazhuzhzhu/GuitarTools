@@ -779,17 +779,20 @@
 
             if (accent) {
                 osc.frequency.value = 1500;
-                gain.gain.setValueAtTime(0.6, metroAudioCtx.currentTime);
+                osc.type = 'triangle';
+                gain.gain.setValueAtTime(1.0, metroAudioCtx.currentTime);
             } else if (isMainBeat) {
                 osc.frequency.value = 1000;
-                gain.gain.setValueAtTime(0.35, metroAudioCtx.currentTime);
+                osc.type = 'triangle';
+                gain.gain.setValueAtTime(0.7, metroAudioCtx.currentTime);
             } else {
                 osc.frequency.value = 800;
-                gain.gain.setValueAtTime(0.15, metroAudioCtx.currentTime);
+                osc.type = 'triangle';
+                gain.gain.setValueAtTime(0.4, metroAudioCtx.currentTime);
             }
-            gain.gain.exponentialRampToValueAtTime(0.001, metroAudioCtx.currentTime + 0.06);
+            gain.gain.exponentialRampToValueAtTime(0.001, metroAudioCtx.currentTime + 0.08);
             osc.start(metroAudioCtx.currentTime);
-            osc.stop(metroAudioCtx.currentTime + 0.06);
+            osc.stop(metroAudioCtx.currentTime + 0.08);
 
             if (isMainBeat) {
                 document.querySelectorAll('.metro-dot').forEach(function(d) { d.classList.remove('on', 'accent'); });
