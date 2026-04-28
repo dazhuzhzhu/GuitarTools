@@ -4,11 +4,18 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.config.Registry;
+import org.apache.http.config.RegistryBuilder;
+import org.apache.http.conn.socket.ConnectionSocketFactory;
+import org.apache.http.conn.socket.PlainConnectionSocketFactory;
+import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
+import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.util.EntityUtils;
 import org.springframework.stereotype.Service;
 
+import javax.net.ssl.SSLContext;
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -16,6 +23,8 @@ import java.net.URLConnection;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -27,8 +36,33 @@ public class BilibiliService {
 
     private static final String USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
 
+    /**
+     * 创建支持 TLS 1.2/1.3 的 HTTP Client（解决 handshake_failure）
+     */
+    private CloseableHttpClient createSecureClient() {
+        try {
+            SSLContext sslContext = SSLContext.getInstance("TLSv1.2");
+            sslContext.init(null, null, new java.security.SecureRandom());
+            SSLConnectionSocketFactory sslSocketFactory = new SSLConnectionSocketFactory(
+                    sslContext,
+                    new String[]{"TLSv1.2", "TLSv1.3"},
+                    null,
+                    SSLConnectionSocketFactory.getDefaultHostnameVerifier()
+            );
+            Registry<ConnectionSocketFactory> socketRegistry = RegistryBuilder.<ConnectionSocketFactory>create()
+                    .register("http", PlainConnectionSocketFactory.INSTANCE)
+                    .register("https", sslSocketFactory)
+                    .build();
+            PoolingHttpClientConnectionManager connManager = new PoolingHttpClientConnectionManager(socketRegistry);
+            return HttpClients.custom().setConnectionManager(connManager).build();
+        } catch (NoSuchAlgorithmException | KeyManagementException e) {
+            // 降级为默认客户端
+            return HttpClients.createDefault();
+        }
+    }
+
     public JSONObject getVideoInfo(String input, int qn) {
-        try (CloseableHttpClient client = HttpClients.createDefault()) {
+        try (CloseableHttpClient client = createSecureClient()) {
             // 先处理短链接和手机端链接，解析出真实URL
             input = resolveShortUrl(input.trim());
 
@@ -77,7 +111,7 @@ public class BilibiliService {
     }
 
     public String getDownloadUrl(String bvid, long cid, int qn) {
-        try (CloseableHttpClient client = HttpClients.createDefault()) {
+        try (CloseableHttpClient client = createSecureClient()) {
             String url = PLAYURL_API + "?bvid=" + bvid + "&cid=" + cid + "&qn=" + qn + "&fnval=0";
             HttpGet request = new HttpGet(url);
             request.setHeader("User-Agent", USER_AGENT);
