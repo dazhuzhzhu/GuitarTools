@@ -1,0 +1,337 @@
+/* 调音器独立页面样式 */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.tuner-wrap {
+    max-width: 500px;
+    margin: 0 auto;
+    text-align: center;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border-radius: 24px;
+    padding: 40px 30px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+}
+
+/* 大音符显示 */
+.tuner-note-display {
+    font-size: 8em;
+    font-weight: 900;
+    color: #764ba2;
+    line-height: 1;
+    margin: 10px 0;
+    min-height: 120px;
+    transition: color .2s, text-shadow .2s;
+}
+
+.tuner-note-display.in-tune {
+    color: #4CAF50;
+    text-shadow: 0 0 30px rgba(76, 175, 80, 0.5);
+}
+
+.tuner-note-display .octave {
+    font-size: 0.4em;
+    vertical-align: super;
+    color: #999;
+}
+
+/* 状态文字 */
+.tuner-status-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    margin: 10px 0;
+}
+
+.tuner-status-text {
+    font-size: 1.2em;
+    font-weight: 600;
+}
+
+.tuner-status-text.perfect { color: #4CAF50; }
+.tuner-status-text.sharp { color: #FF9800; }
+.tuner-status-text.flat { color: #2196F3; }
+
+.tuner-freq {
+    font-size: 0.9em;
+    color: #999;
+}
+
+/* 滑块指示器 */
+.tuner-meter-wrap { margin: 20px 0; }
+
+.tuner-meter {
+    width: 100%;
+    height: 36px;
+    background: rgba(200, 200, 200, 0.2);
+    border-radius: 18px;
+    position: relative;
+    overflow: hidden;
+}
+
+.tuner-meter::before {
+    content: '♭';
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #2196F3;
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.tuner-meter::after {
+    content: '♯';
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #FF9800;
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.tuner-meter-center {
+    position: absolute;
+    left: 50%;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: rgba(0, 0, 0, 0.3);
+    transform: translateX(-50%);
+}
+
+.tuner-indicator {
+    position: absolute;
+    top: 4px;
+    bottom: 4px;
+    width: 28px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    border-radius: 14px;
+    left: 50%;
+    transform: translateX(-50%);
+    transition: left 0.35s cubic-bezier(.25,.8,.25,1), background 0.2s;
+    box-shadow: 0 2px 8px rgba(118, 75, 162, 0.4);
+}
+
+.tuner-indicator.perfect {
+    background: linear-gradient(135deg, #4CAF50, #66BB6A);
+}
+
+/* 预设选择器 */
+.tuner-preset-row {
+    display: flex;
+    gap: 10px;
+    margin: 12px 0 6px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.tuner-preset-select {
+    flex: 1;
+    max-width: 220px;
+    padding: 8px 12px;
+    border-radius: 10px;
+    border: 1px solid rgba(118, 75, 162, 0.3);
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(8px);
+    color: #333;
+    font-size: 13px;
+    outline: none;
+    cursor: pointer;
+}
+
+/* 自动/手动模式切换 */
+.tuner-mode-row {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    margin: 10px 0;
+}
+
+.tuner-mode-pill {
+    padding: 8px 18px;
+    border-radius: 20px;
+    border: 2px solid rgba(118, 75, 162, 0.3);
+    background: rgba(255, 255, 255, 0.5);
+    color: #764ba2;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all .2s;
+}
+
+.tuner-mode-pill.on {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: #fff;
+    border-color: transparent;
+    box-shadow: 0 3px 12px rgba(118, 75, 162, 0.3);
+}
+
+/* 琴弦按钮 */
+.tuner-strings {
+    display: grid;
+    gap: 10px;
+    margin: 15px 0;
+}
+
+.tuner-str-btn {
+    padding: 16px 12px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.6);
+    border: 2px solid rgba(118, 75, 162, 0.15);
+    cursor: pointer;
+    transition: all .2s;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.tuner-str-btn:hover {
+    background: rgba(118, 75, 162, 0.1);
+    border-color: rgba(118, 75, 162, 0.3);
+}
+
+.tuner-str-btn.active {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: #fff;
+    border-color: transparent;
+    box-shadow: 0 4px 16px rgba(118, 75, 162, 0.35);
+}
+
+.tuner-str-btn.active .tuner-str-num {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.tuner-str-note {
+    font-size: 1.8em;
+    font-weight: 800;
+    color: #333;
+}
+
+.tuner-str-btn.active .tuner-str-note {
+    color: #fff;
+}
+
+.tuner-str-num {
+    font-size: 0.9em;
+    color: #999;
+}
+
+/* 开始按钮 */
+.tuner-btn {
+    padding: 14px 40px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    font-size: 16px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all .2s;
+    box-shadow: 0 4px 15px rgba(118, 75, 162, 0.3);
+    margin-top: 15px;
+}
+
+.tuner-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(118, 75, 162, 0.4);
+}
+
+.tuner-btn.active {
+    background: linear-gradient(135deg, #e74c3c, #c0392b);
+}
+
+/* 设备设置 */
+.tuner-settings {
+    margin-top: 25px;
+    padding: 20px;
+    background: rgba(118, 75, 162, 0.06);
+    border-radius: 16px;
+    text-align: left;
+}
+
+.tuner-settings-title {
+    font-weight: bold;
+    color: #764ba2;
+    margin-bottom: 12px;
+    font-size: 14px;
+}
+
+.tuner-input-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.tuner-input-label {
+    font-size: 13px;
+    color: #666;
+    min-width: 50px;
+}
+
+.tuner-select {
+    flex: 1;
+    padding: 6px 10px;
+    border-radius: 8px;
+    border: 1px solid rgba(118, 75, 162, 0.3);
+    background: rgba(255, 255, 255, 0.6);
+    color: #333;
+    font-size: 13px;
+    outline: none;
+}
+
+/* 通道按钮 */
+.tuner-channels {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.tuner-ch-btn {
+    padding: 6px 14px;
+    border-radius: 8px;
+    border: 1.5px solid rgba(118, 75, 162, 0.2);
+    background: rgba(255, 255, 255, 0.5);
+    color: #333;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all .2s;
+}
+
+.tuner-ch-btn:hover {
+    background: rgba(118, 75, 162, 0.1);
+    border-color: rgba(118, 75, 162, 0.4);
+}
+
+.tuner-ch-btn.active {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: #fff;
+    border-color: transparent;
+}
+
+/* 响应式 */
+@media (max-width: 480px) {
+    .tuner-wrap {
+        padding: 30px 20px;
+    }
+    
+    .tuner-note-display {
+        font-size: 6em;
+    }
+    
+    .tuner-str-note {
+        font-size: 1.5em;
+    }
+}

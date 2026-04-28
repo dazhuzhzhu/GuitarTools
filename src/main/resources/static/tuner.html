@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎤</text></svg>">
+    <title>吉他调音器</title>
+    <link rel="stylesheet" href="/tuner.css">
+</head>
+<body>
+    <div class="tuner-wrap">
+        <div class="tuner-note-display" id="tunerNote">-</div>
+        <div class="tuner-status-row">
+            <span class="tuner-status-text" id="tunerStatus">选择输入源后点击开始</span>
+            <span class="tuner-freq" id="tunerFrequency">-- Hz</span>
+        </div>
+        <div class="tuner-meter-wrap">
+            <div class="tuner-meter">
+                <div class="tuner-meter-center"></div>
+                <div class="tuner-indicator" id="tunerIndicator"></div>
+            </div>
+        </div>
+
+        <div class="tuner-preset-row">
+            <select class="tuner-preset-select" id="tunerPreset" onchange="onTunerPresetChange()"></select>
+        </div>
+        <div class="tuner-mode-row">
+            <div class="tuner-mode-pill on" id="tunerModeAuto" onclick="setTunerAutoDetect(true)">🎯 自动选弦</div>
+            <div class="tuner-mode-pill" id="tunerModeManual" onclick="setTunerAutoDetect(false)">✋ 手动选弦</div>
+        </div>
+        <div class="tuner-strings" id="tunerStrings"></div>
+
+        <button class="tuner-btn" id="tunerBtn" onclick="toggleTuner()">开始调音</button>
+
+        <div class="tuner-settings">
+            <div class="tuner-settings-title">音频输入设置 <span id="tunerDeviceCount" style="font-weight:normal;color:#999;font-size:12px;"></span></div>
+            <div class="tuner-input-row">
+                <span class="tuner-input-label">设备</span>
+                <select class="tuner-select" id="tunerDevice" onchange="onTunerDeviceChange()">
+                    <option value="">默认麦克风</option>
+                </select>
+                <button onclick="refreshDeviceList()" style="padding:6px 12px;border:1px solid rgba(118,75,162,0.3);border-radius:8px;background:rgba(255,255,255,0.15);color:#764ba2;cursor:pointer;font-size:12px;">刷新</button>
+            </div>
+            <div class="tuner-input-row">
+                <span class="tuner-input-label">通道</span>
+                <div class="tuner-channels" id="tunerChannels">
+                    <span style="color:#999;font-size:12px;">点击开始调音后显示通道</span>
+                </div>
+            </div>
+            <div style="margin-top:10px;padding:10px;background:rgba(118,75,162,0.08);border-radius:8px;font-size:11px;color:#888;line-height:1.5;">
+                💡 <b>麦克风调音</b>：选默认麦克风即可<br>
+                🎸 <b>声卡调音</b>：选择你的声卡设备（如 Uports2 Dyna），吉他信号通常在 CH2<br>
+                ⚠️ 手机需要 HTTPS 才能使用麦克风
+            </div>
+        </div>
+    </div>
+
+    <script src="/tuner.js"></script>
+    <script>
+        // 页面加载时初始化
+        window.addEventListener('load', function() {
+            renderTunerPresets();
+            renderTunerStrings();
+        });
+    </script>
+</body>
+</html>

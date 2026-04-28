@@ -10,4 +10,9 @@ public class HomeController {
     public String index() {
         return "index";
     }
+
+    @GetMapping("/tuner")
+    public String tuner() {
+        return "forward:/tuner.html";
+    }
 }
