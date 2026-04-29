@@ -65,7 +65,13 @@ public class BilibiliController {
                 return;
             }
 
-            response.setContentType("video/mp4");
+            // 透传 B 站的 Content-Type（不要固定 video/mp4）
+            org.apache.http.Header contentType = httpResponse.getFirstHeader("Content-Type");
+            if (contentType != null) {
+                response.setContentType(contentType.getValue());
+            } else {
+                response.setContentType("video/mp4");
+            }
             response.setHeader("Accept-Ranges", "bytes");
 
             // 透传 Content-Length 和 Content-Range
