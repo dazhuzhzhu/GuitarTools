@@ -1151,46 +1151,33 @@
             const existing = document.querySelector('.video-player-container');
             if (existing) existing.remove();
             
-            // 检测是否是本地环境（localhost）
-            const isLocal = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+            // 使用相对路径，自动继承当前页面的协议（HTTP 或 HTTPS）
+            const playUrl = `/api/bilibili/play?bvid=${bvid}&cid=${cid}&qn=${qn}`;
             
-            if (isLocal) {
-                // 本地环境：使用后端代理播放，支持无极变速
-                const playUrl = `/api/bilibili/play?bvid=${bvid}&cid=${cid}&qn=${qn}`;
-                document.getElementById('biliResults').insertAdjacentHTML('beforeend', `
-                    <div class="video-player-container" style="padding:15px;">
-                        <div style="background:#000;border-radius:12px;overflow:hidden;margin-bottom:15px;position:relative;width:100%;">
-                            <video controls autoplay style="width:100%;display:block;max-width:100%;" id="biliVideo">
-                                <source src="${playUrl}" type="video/mp4">
-                            </video>
-                        </div>
-                        <div style="background:linear-gradient(135deg,#667eea,#764ba2);border-radius:12px;padding:15px 20px;color:white;">
-                            <p style="margin:0 0 10px 0;font-weight:bold;font-size:16px;">🎬 ${title}</p>
-                            <div style="display:flex;align-items:center;gap:10px;">
-                                <span style="font-size:13px;white-space:nowrap;">速度:</span>
-                                <input type="range" min="0.25" max="2" step="0.05" value="1" style="flex:1;accent-color:#ffd700;height:6px;" onchange="this.nextElementSibling.textContent=this.value+'x';document.getElementById('biliVideo').playbackRate=parseFloat(this.value)">
-                                <span style="background:#ffd700;color:#333;padding:4px 10px;border-radius:15px;font-weight:bold;font-size:13px;">1x</span>
-                            </div>
+            document.getElementById('biliResults').insertAdjacentHTML('beforeend', `
+                <div class="video-player-container" style="padding:15px;">
+                    <div style="background:#000;border-radius:12px;overflow:hidden;margin-bottom:15px;position:relative;width:100%;">
+                        <video controls autoplay style="width:100%;display:block;max-width:100%;" id="biliVideo" src="${playUrl}"></video>
+                    </div>
+                    <div style="background:linear-gradient(135deg,#667eea,#764ba2);border-radius:12px;padding:15px 20px;color:white;">
+                        <p style="margin:0 0 10px 0;font-weight:bold;font-size:16px;">🎬 ${title}</p>
+                        <div style="display:flex;align-items:center;gap:10px;">
+                            <span style="font-size:13px;white-space:nowrap;">速度:</span>
+                            <input type="range" min="0.25" max="2" step="0.05" value="1" style="flex:1;accent-color:#ffd700;height:6px;" onchange="this.nextElementSibling.textContent=this.value+'x';document.getElementById('biliVideo').playbackRate=parseFloat(this.value)">
+                            <span style="background:#ffd700;color:#333;padding:4px 10px;border-radius:15px;font-weight:bold;font-size:13px;">1x</span>
                         </div>
                     </div>
-                `);
-            } else {
-                // 云端环境：使用 B 站官方 iframe 播放器（避免防盗链）
-                document.getElementById('biliResults').insertAdjacentHTML('beforeend', `
-                    <div class="video-player-container" style="padding:15px;">
-                        <div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:12px;margin-bottom:15px;">
-                            <iframe src="https://player.bilibili.com/player.html?bvid=${bvid}&cid=${cid}&autoplay=1&high_quality=1" 
-                                    style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;" 
-                                    allowfullscreen="allowfullscreen">
-                            </iframe>
-                        </div>
-                        <div style="background:linear-gradient(135deg,#667eea,#764ba2);border-radius:12px;padding:15px 20px;color:white;">
-                            <p style="margin:0;font-weight:bold;font-size:16px;">🎬 ${title}</p>
-                            <p style="margin:5px 0 0 0;font-size:13px;opacity:0.9;">💡 提示：B站官方播放器，支持弹幕、画质切换、倍速播放（右键视频可调速）</p>
-                        </div>
-                    </div>
-                `);
-            }
+                </div>
+            `);
+            
+            // 调试：检查视频加载状态
+            setTimeout(() => {
+                const video = document.getElementById('biliVideo');
+                console.log('[视频调试] src:', video.src);
+                console.log('[视频调试] networkState:', video.networkState);
+                console.log('[视频调试] readyState:', video.readyState);
+                console.log('[视频调试] error:', video.error);
+            }, 1000);
         }
 
         function downloadVideo(url) { window.location.href = url; }
