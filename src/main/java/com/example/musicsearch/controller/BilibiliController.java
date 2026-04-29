@@ -68,8 +68,10 @@ public class BilibiliController {
             // 透传 B 站的 Content-Type（不要固定 video/mp4）
             org.apache.http.Header contentType = httpResponse.getFirstHeader("Content-Type");
             if (contentType != null) {
+                System.out.println("[B站播放] B站返回 Content-Type: " + contentType.getValue());
                 response.setContentType(contentType.getValue());
             } else {
+                System.out.println("[B站播放] B站未返回 Content-Type，使用默认 video/mp4");
                 response.setContentType("video/mp4");
             }
             response.setHeader("Accept-Ranges", "bytes");
@@ -84,6 +86,10 @@ public class BilibiliController {
                 response.setStatus(206);
                 response.setHeader("Content-Range", contentRange.getValue());
             }
+            
+            // 输出调试日志
+            System.out.println("[B站播放] HTTP 状态码: " + statusCode);
+            System.out.println("[B站播放] Content-Length: " + (contentLength != null ? contentLength.getValue() : "null"));
 
             // 流式输出
             try (InputStream in = httpResponse.getEntity().getContent();

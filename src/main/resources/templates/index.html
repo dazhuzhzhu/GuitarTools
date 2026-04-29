@@ -1177,6 +1177,16 @@
                 console.log('[视频调试] networkState:', video.networkState);
                 console.log('[视频调试] readyState:', video.readyState);
                 console.log('[视频调试] error:', video.error);
+                
+                // 获取视频的 MIME 类型
+                fetch(video.src, { method: 'HEAD' })
+                    .then(res => {
+                        console.log('[视频调试] Response Status:', res.status);
+                        console.log('[视频调试] Content-Type:', res.headers.get('content-type'));
+                        console.log('[视频调试] Content-Length:', res.headers.get('content-length'));
+                        console.log('[视频调试] Accept-Ranges:', res.headers.get('accept-ranges'));
+                    })
+                    .catch(err => console.error('[视频调试] HEAD 请求失败:', err));
             }, 1000);
         }
 
