@@ -42,7 +42,7 @@ public class BilibiliController {
 
             URL url = new URL(downloadUrl);
             String ua = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
-            String referer = "https://www.bilibili.com/";
+            String referer = "https://www.bilibili.com/video/" + bvid;
 
             // 先用GET+Range=bytes=0-0获取总大小（比HEAD更可靠）
             long totalSize = -1;
@@ -51,6 +51,8 @@ public class BilibiliController {
                 probeConn.setRequestMethod("GET");
                 probeConn.setRequestProperty("User-Agent", ua);
                 probeConn.setRequestProperty("Referer", referer);
+                probeConn.setRequestProperty("Origin", "https://www.bilibili.com");
+                probeConn.setRequestProperty("Cookie", "CURRENT_FNVAL=4048; b_nut=1704067000; buvid3=XXXXX");
                 probeConn.setRequestProperty("Range", "bytes=0-0");
                 int probeStatus = probeConn.getResponseCode();
                 if (probeStatus == 206) {
@@ -66,7 +68,8 @@ public class BilibiliController {
                     totalSize = probeConn.getContentLengthLong();
                 }
                 probeConn.disconnect();
-            } catch (Exception ignored) {
+            } catch (Exception e) {
+                System.err.println("[B站播放] 探测大小失败: " + e.getMessage());
             }
 
             // 如果探测失败，再试HEAD
@@ -76,9 +79,11 @@ public class BilibiliController {
                     headConn.setRequestMethod("HEAD");
                     headConn.setRequestProperty("User-Agent", ua);
                     headConn.setRequestProperty("Referer", referer);
+                    headConn.setRequestProperty("Origin", "https://www.bilibili.com");
                     totalSize = headConn.getContentLengthLong();
                     headConn.disconnect();
-                } catch (Exception ignored) {
+                } catch (Exception e) {
+                    System.err.println("[B站播放] HEAD请求失败: " + e.getMessage());
                 }
             }
 
@@ -91,6 +96,7 @@ public class BilibiliController {
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                 conn.setRequestProperty("User-Agent", ua);
                 conn.setRequestProperty("Referer", referer);
+                conn.setRequestProperty("Origin", "https://www.bilibili.com");
                 if (rangeHeader != null) {
                     conn.setRequestProperty("Range", rangeHeader);
                 }
@@ -100,6 +106,10 @@ public class BilibiliController {
                     response.setStatus(206);
                     String cr = conn.getHeaderField("Content-Range");
                     if (cr != null) response.setHeader("Content-Range", cr);
+                } else if (biliStatus == 403) {
+                    System.err.println("[B站播放] 403 Forbidden，防盗链拦截");
+                    response.sendError(403, "视频加载失败：B站防盗链拦截，请尝试下载后本地播放");
+                    return;
                 }
                 String cl = conn.getHeaderField("Content-Length");
                 if (cl != null) response.setHeader("Content-Length", cl);
@@ -133,6 +143,7 @@ public class BilibiliController {
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             conn.setRequestProperty("User-Agent", ua);
             conn.setRequestProperty("Referer", referer);
+            conn.setRequestProperty("Origin", "https://www.bilibili.com");
             conn.setRequestProperty("Range", "bytes=" + start + "-" + end);
 
             response.setHeader("Content-Length", String.valueOf(contentLength));
@@ -151,6 +162,7 @@ public class BilibiliController {
                 }
             }
         } catch (Exception e) {
+            System.err.println("[B站播放] 异常: " + e.getMessage());
             e.printStackTrace();
         }
     }
