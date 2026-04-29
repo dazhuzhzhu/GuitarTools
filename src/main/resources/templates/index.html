@@ -1119,7 +1119,7 @@
                             <div class="video-title">${title}</div>
                             <div class="video-info">时长: ${formatDuration(duration)}</div>
                             <div class="video-actions">
-                                <button class="video-btn" onclick="playVideo('/api/bilibili/play?bvid=${bvid}&cid=${cid}&qn=${quality}', '${escapeHtml(title)}')">▶️ 播放</button>
+                                <button class="video-btn" onclick="playVideo('${bvid}', '${cid}', '${escapeHtml(title)}')">▶️ 播放</button>
                                 <button class="video-btn" onclick="downloadVideo('/api/bilibili/download?bvid=${bvid}&cid=${cid}&qn=${quality}&filename=${encodeURIComponent(title)}')">💾 下载</button>
                             </div>
                         </div>
@@ -1143,23 +1143,21 @@
             return div.innerHTML.replace(/'/g, "\\'").replace(/"/g, '\\"');
         }
 
-        function playVideo(url, title) {
+        function playVideo(bvid, cid, title) {
             const existing = document.querySelector('.video-player-container');
             if (existing) existing.remove();
             document.getElementById('biliResults').insertAdjacentHTML('beforeend', `
                 <div class="video-player-container" style="padding:15px;">
-                    <div style="background:#000;border-radius:12px;overflow:hidden;margin-bottom:15px;position:relative;width:100%;">
-                        <video controls autoplay style="width:100%;display:block;max-width:100%;" id="biliVideo">
-                            <source src="${url}" type="video/mp4">
-                        </video>
+                    <div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:12px;margin-bottom:15px;">
+                        <iframe src="https://player.bilibili.com/player.html?bvid=${bvid}&cid=${cid}&autoplay=1&high_quality=1" 
+                                style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;" 
+                                allowfullscreen="allowfullscreen" 
+                                sandbox="allow-top-navigation allow-same-origin allow-forms allow-scripts allow-popups">
+                        </iframe>
                     </div>
-                    <div style="background:linear-gradient(135deg,#667eea,#764ba2);border-radius:12px;padding:15px 20px;color:white;margin-top:10px;">
-                        <p style="margin:0 0 10px 0;font-weight:bold;font-size:16px;">🎬 ${title}</p>
-                        <div style="display:flex;align-items:center;gap:10px;">
-                            <span style="font-size:13px;white-space:nowrap;">速度:</span>
-                            <input type="range" min="0.25" max="2" step="0.05" value="1" style="flex:1;accent-color:#ffd700;height:6px;" onchange="this.nextElementSibling.textContent=this.value+'x';document.getElementById('biliVideo').playbackRate=parseFloat(this.value)">
-                            <span style="background:#ffd700;color:#333;padding:4px 10px;border-radius:15px;font-weight:bold;font-size:13px;">1x</span>
-                        </div>
+                    <div style="background:linear-gradient(135deg,#667eea,#764ba2);border-radius:12px;padding:15px 20px;color:white;">
+                        <p style="margin:0;font-weight:bold;font-size:16px;">🎬 ${title}</p>
+                        <p style="margin:5px 0 0 0;font-size:13px;opacity:0.9;">💡 提示：B站官方播放器，支持弹幕、画质切换、倍速播放</p>
                     </div>
                 </div>
             `);
