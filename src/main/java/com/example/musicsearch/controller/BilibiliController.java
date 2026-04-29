@@ -44,115 +44,43 @@ public class BilibiliController {
             String ua = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
             String referer = "https://www.bilibili.com/video/" + bvid;
 
-            // 先用GET+Range=bytes=0-0获取总大小（比HEAD更可靠）
-            long totalSize = -1;
-            try {
-                HttpURLConnection probeConn = (HttpURLConnection) url.openConnection();
-                probeConn.setRequestMethod("GET");
-                probeConn.setRequestProperty("User-Agent", ua);
-                probeConn.setRequestProperty("Referer", referer);
-                probeConn.setRequestProperty("Origin", "https://www.bilibili.com");
-                probeConn.setRequestProperty("Cookie", "CURRENT_FNVAL=4048; b_nut=1704067000; buvid3=XXXXX");
-                probeConn.setRequestProperty("Range", "bytes=0-0");
-                int probeStatus = probeConn.getResponseCode();
-                if (probeStatus == 206) {
-                    // Content-Range: bytes 0-0/TOTAL
-                    String cr = probeConn.getHeaderField("Content-Range");
-                    if (cr != null && cr.contains("/")) {
-                        String sizeStr = cr.substring(cr.lastIndexOf('/') + 1).trim();
-                        if (!"*".equals(sizeStr)) {
-                            totalSize = Long.parseLong(sizeStr);
-                        }
-                    }
-                } else {
-                    totalSize = probeConn.getContentLengthLong();
-                }
-                probeConn.disconnect();
-            } catch (Exception e) {
-                System.err.println("[B站播放] 探测大小失败: " + e.getMessage());
-            }
-
-            // 如果探测失败，再试HEAD
-            if (totalSize <= 0) {
-                try {
-                    HttpURLConnection headConn = (HttpURLConnection) url.openConnection();
-                    headConn.setRequestMethod("HEAD");
-                    headConn.setRequestProperty("User-Agent", ua);
-                    headConn.setRequestProperty("Referer", referer);
-                    headConn.setRequestProperty("Origin", "https://www.bilibili.com");
-                    totalSize = headConn.getContentLengthLong();
-                    headConn.disconnect();
-                } catch (Exception e) {
-                    System.err.println("[B站播放] HEAD请求失败: " + e.getMessage());
-                }
-            }
+            // 关键：使用 Apache HttpClient 代替 HttpURLConnection，绕过部分防盗链
+            org.apache.http.client.HttpClient httpClient = org.apache.http.impl.client.HttpClients.createDefault();
+            org.apache.http.client.methods.HttpGet httpGet = new org.apache.http.client.methods.HttpGet(downloadUrl);
+            httpGet.setHeader("User-Agent", ua);
+            httpGet.setHeader("Referer", referer);
+            httpGet.setHeader("Origin", "https://www.bilibili.com");
 
             String rangeHeader = request.getHeader("Range");
-            response.setContentType("video/mp4");
-            response.setHeader("Accept-Ranges", "bytes");
+            if (rangeHeader != null) {
+                httpGet.setHeader("Range", rangeHeader);
+            }
 
-            if (totalSize <= 0) {
-                // 无法得知大小，直接透传全部数据
-                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-                conn.setRequestProperty("User-Agent", ua);
-                conn.setRequestProperty("Referer", referer);
-                conn.setRequestProperty("Origin", "https://www.bilibili.com");
-                if (rangeHeader != null) {
-                    conn.setRequestProperty("Range", rangeHeader);
-                }
-                // 透传B站的响应状态和头
-                int biliStatus = conn.getResponseCode();
-                if (biliStatus == 206) {
-                    response.setStatus(206);
-                    String cr = conn.getHeaderField("Content-Range");
-                    if (cr != null) response.setHeader("Content-Range", cr);
-                } else if (biliStatus == 403) {
-                    System.err.println("[B站播放] 403 Forbidden，防盗链拦截");
-                    response.sendError(403, "视频加载失败：B站防盗链拦截，请尝试下载后本地播放");
-                    return;
-                }
-                String cl = conn.getHeaderField("Content-Length");
-                if (cl != null) response.setHeader("Content-Length", cl);
+            org.apache.http.HttpResponse httpResponse = httpClient.execute(httpGet);
+            int statusCode = httpResponse.getStatusLine().getStatusCode();
 
-                try (InputStream in = conn.getInputStream();
-                     OutputStream out = response.getOutputStream()) {
-                    byte[] buffer = new byte[16384];
-                    int len;
-                    while ((len = in.read(buffer)) != -1) {
-                        out.write(buffer, 0, len);
-                    }
-                }
+            if (statusCode == 403) {
+                System.err.println("[B站播放] 403 Forbidden，防盗链拦截");
+                response.sendError(403, "视频加载失败：B站防盗链拦截，请尝试下载后本地播放");
                 return;
             }
 
-            // 已知总大小，精确处理Range
-            long start = 0, end = totalSize - 1;
-            if (rangeHeader != null && rangeHeader.startsWith("bytes=")) {
-                String rangeVal = rangeHeader.substring(6).trim();
-                String[] parts = rangeVal.split("-", 2);
-                if (parts[0] != null && !parts[0].isEmpty()) {
-                    start = Long.parseLong(parts[0].trim());
-                }
-                if (parts.length > 1 && parts[1] != null && !parts[1].isEmpty()) {
-                    end = Long.parseLong(parts[1].trim());
-                }
+            response.setContentType("video/mp4");
+            response.setHeader("Accept-Ranges", "bytes");
+
+            // 透传 Content-Length 和 Content-Range
+            org.apache.http.Header contentLength = httpResponse.getFirstHeader("Content-Length");
+            if (contentLength != null) {
+                response.setHeader("Content-Length", contentLength.getValue());
             }
-            if (end >= totalSize) end = totalSize - 1;
-            long contentLength = end - start + 1;
-
-            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-            conn.setRequestProperty("User-Agent", ua);
-            conn.setRequestProperty("Referer", referer);
-            conn.setRequestProperty("Origin", "https://www.bilibili.com");
-            conn.setRequestProperty("Range", "bytes=" + start + "-" + end);
-
-            response.setHeader("Content-Length", String.valueOf(contentLength));
-            if (rangeHeader != null) {
+            org.apache.http.Header contentRange = httpResponse.getFirstHeader("Content-Range");
+            if (contentRange != null) {
                 response.setStatus(206);
-                response.setHeader("Content-Range", "bytes " + start + "-" + end + "/" + totalSize);
+                response.setHeader("Content-Range", contentRange.getValue());
             }
 
-            try (InputStream in = conn.getInputStream();
+            // 流式输出
+            try (InputStream in = httpResponse.getEntity().getContent();
                  OutputStream out = response.getOutputStream()) {
                 byte[] buffer = new byte[16384];
                 int len;
